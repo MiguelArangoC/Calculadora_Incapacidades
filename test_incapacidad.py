@@ -10,14 +10,10 @@ Basado en el libro 'casos_prueba_incapacidad.xlsx':
 Ejecutar con:
     python -m unittest test_incapacidad.py -v
 """
-
 import unittest
-from incapacidad import (
-    calcular_pago_incapacidad,
-    SalarioInvalido,
-    DiasIncapacidadInvalidos,
-    TipoIncapacidadInvalido,
-)
+import sys
+sys.path.append("src")
+from model.incapacidad import * 
 
 
 # ---------------------------------------------------------------------------
