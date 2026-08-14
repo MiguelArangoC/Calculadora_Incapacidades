@@ -1,6 +1,6 @@
 # Calculadora de Incapacidades
 
-Este proyecto contiene una calculadora sencilla para determinar el pago correspondiente a incapacidades de origen común, basada en la legislación laboral colombiana.
+Este proyecto contiene una calculadora sencilla para determinar el pago correspondiente a incapacidades laborales en Colombia, contemplando los distintos tipos reconocidos por la legislación laboral: enfermedad general, maternidad y riesgo laboral.
 
 ## Entradas (Inputs)
 
@@ -8,31 +8,52 @@ El programa recibe la información a través de la función `calcular_pago_incap
 
 1. **`salario_mensual`** (`int` o `float`): El salario mensual del empleado. Debe ser un valor numérico mayor a cero.
 2. **`dias_incapacidad`** (`int` o `float`): El número de días que el empleado estará incapacitado. Debe ser un valor numérico mayor a cero.
-3. **`porcentaje`** (`float`, opcional): El porcentaje de reconocimiento económico. Por defecto, es `0.6667` (66.67%), correspondiente a la norma laboral para incapacidades de origen común.
+3. **`tipo_incapacidad`** (`str`, opcional): Llave que determina el porcentaje de reconocimiento económico a aplicar. Por defecto es `"enfermedad_general"`. Los valores válidos están definidos en el diccionario `TIPOS_INCAPACIDAD`:
+
+   | Llave                | Porcentaje | Fundamento legal |
+   |-----------------------|-----------|-------------------|
+   | `enfermedad_general`  | 66.67%    | Decreto 3135 de 1968 / Ley 776 de 2002 |
+   | `maternidad`          | 100%      | Art. 236 CST, modificado por la Ley 2114 de 2021 |
+   | `riesgo_laboral`      | 100%      | Ley 776 de 2002 (a cargo de la ARL) |
+
+   Para agregar un nuevo tipo de incapacidad, basta con añadir una llave nueva a `TIPOS_INCAPACIDAD` en `incapacidad.py`; no es necesario modificar la lógica de cálculo.
 
 ### Validaciones
 
-El programa realiza validaciones sobre los datos de entrada para garantizar que sean correctos:
+El programa realiza validaciones sobre los datos de entrada y, si fallan, lanza una excepción propia en lugar de una genérica:
 
-- Si los valores ingresados no son numéricos (ej. texto o booleanos), arrojará un error `TypeError`.
-- Si los valores ingresados son menores o iguales a cero, arrojará un error `ValueError`.
+- **`tipo_incapacidad` no reconocido** (no existe como llave en `TIPOS_INCAPACIDAD`) → `TipoIncapacidadInvalido`.
+- **`salario_mensual` menor o igual a cero** → `SalarioInvalido`.
+- **`dias_incapacidad` menor o igual a cero** → `DiasIncapacidadInvalidos`.
+- **`salario_mensual` o `dias_incapacidad` no numéricos** (ej. texto) → `TypeError`.
+
+Estas tres excepciones propias (`SalarioInvalido`, `DiasIncapacidadInvalidos`, `TipoIncapacidadInvalido`) están definidas en `incapacidad.py` y heredan directamente de `Exception`, no de `ValueError`.
 
 ## Proceso (Process)
 
 Una vez validados los datos de entrada, el programa realiza los siguientes cálculos matemáticos de manera interna:
 
-1. **Cálculo del valor diario:** Divide el `salario_mensual` entre 30 (días estándar del mes laboral) para obtener cuánto gana el empleado en un día.
+1. **Búsqueda del porcentaje:** Consulta el porcentaje de reconocimiento correspondiente al `tipo_incapacidad` recibido en el diccionario `TIPOS_INCAPACIDAD`.
+2. **Cálculo del valor diario:** Divide el `salario_mensual` entre 30 (días estándar del mes laboral) para obtener cuánto gana el empleado en un día.
    > `valor_dia = salario_mensual / 30`
-2. **Cálculo del pago por incapacidad:** Multiplica el valor de un día de trabajo por el porcentaje de reconocimiento (66.67%) y luego lo multiplica por el número de días de incapacidad.
+3. **Cálculo del pago por incapacidad:** Multiplica el valor de un día de trabajo por el porcentaje de reconocimiento y luego lo multiplica por el número de días de incapacidad.
    > `pago = valor_dia * porcentaje * dias_incapacidad`
 
 ## Salida (Outputs)
 
 El programa retorna (devuelve) un valor de tipo `float` (número con decimales) que representa el monto total en dinero que el empleado debe recibir por el periodo de incapacidad reportado.
 
+## Alcance y Limitaciones
+
+Aunque la función ya distingue entre enfermedad general, maternidad y riesgo laboral, sigue siendo una aproximación simplificada frente a la norma real:
+
+- **No valida un tope de días:** la función no limita ni ajusta el cálculo para incapacidades muy prolongadas (por ejemplo, más de 720 días). En la práctica, pasado el día 540 continuo de una incapacidad por enfermedad general, el pago deja de regirse por el esquema normal de EPS y pasa a trámites especiales de rehabilitación y calificación de pérdida de capacidad laboral. Si se ingresa un número de días superior a ese umbral, el programa igual retorna un resultado numérico, pero dicho resultado no representa necesariamente un valor jurídicamente válido y debería revisarse manualmente.
+- **No calcula por tramos:** para `enfermedad_general`, la ley real varía el porcentaje según el tramo de días (66.67% del día 1 al 90, 50% del día 91 al 180). La función aplica un único porcentaje fijo a la totalidad de los días ingresados.
+- **No reproduce reglas adicionales de `riesgo_laboral`:** por ejemplo, no contempla que los dos primeros días de una incapacidad por enfermedad general corren por cuenta del empleador, ni otras condiciones administrativas propias de la ARL o la EPS.
+
 ## Pruebas (Tests)
 
-El proyecto incluye un archivo `test_incapacidad.py` que se puede ejecutar para verificar el correcto funcionamiento del programa frente a diversos casos normales, extraordinarios y de error.
+El proyecto incluye un archivo `test_incapacidad.py` que se puede ejecutar para verificar el correcto funcionamiento del programa frente a diversos casos normales, extraordinarios y de error (incluyendo los tres tipos de incapacidad y las tres excepciones propias).
 
 ```bash
 python -m unittest test_incapacidad.py -v
