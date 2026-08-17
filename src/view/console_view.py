@@ -1,15 +1,4 @@
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from model.incapacidad import (
-    calcular_pago_incapacidad,
-    TIPOS_INCAPACIDAD,
-    TipoIncapacidadInvalido,
-    SalarioInvalido,
-    DiasIncapacidadInvalidos
-)
+from src.model.incapacidad import *
 
 def mostrar_menu():
     print("\n--- Calculadora de Pago por Incapacidad ---")

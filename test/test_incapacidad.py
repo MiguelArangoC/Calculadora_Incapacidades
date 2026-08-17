@@ -11,11 +11,7 @@ Ejecutar con:
     python -m unittest test_incapacidad.py -v
 """
 import unittest
-import sys
-sys.path.append("src")
-from model.incapacidad import * 
-
-
+from src.model.incapacidad import *
 # ---------------------------------------------------------------------------
 # CASOS NORMALES (1-3)
 # ---------------------------------------------------------------------------

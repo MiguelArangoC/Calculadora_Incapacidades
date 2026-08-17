@@ -51,6 +51,18 @@ Aunque la función ya distingue entre enfermedad general, maternidad y riesgo la
 - **No calcula por tramos:** para `enfermedad_general`, la ley real varía el porcentaje según el tramo de días (66.67% del día 1 al 90, 50% del día 91 al 180). La función aplica un único porcentaje fijo a la totalidad de los días ingresados.
 - **No reproduce reglas adicionales de `riesgo_laboral`:** por ejemplo, no contempla que los dos primeros días de una incapacidad por enfermedad general corren por cuenta del empleador, ni otras condiciones administrativas propias de la ARL o la EPS.
 
+## Ejecución (Ejecutar el programa)
+
+El proyecto cuenta con una interfaz de consola interactiva (`console_view`) que permite a los usuarios calcular el pago por incapacidad de forma guiada.
+
+Para ejecutar el programa, debes abrir una terminal o consola, ubicarte en el directorio raíz del proyecto (donde se encuentra este archivo `README.md`) y ejecutar el siguiente comando:
+
+```bash
+python -m src.view.console_view
+```
+
+Al ejecutarlo, verás un menú interactivo que te pedirá ingresar el salario, los días de incapacidad y seleccionar el tipo de incapacidad para luego mostrar el monto total a pagar.
+
 ## Pruebas (Tests)
 
 El proyecto incluye un archivo `test_incapacidad.py` que se puede ejecutar para verificar el correcto funcionamiento del programa frente a diversos casos normales, extraordinarios y de error (incluyendo los tres tipos de incapacidad y las tres excepciones propias).
