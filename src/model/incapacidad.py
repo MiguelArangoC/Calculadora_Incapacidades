@@ -11,14 +11,16 @@ El porcentaje de reconocimiento depende del tipo de incapacidad:
 - riesgo_laboral:     100%   desde el primer día (Ley 776 de 2002, a cargo de la ARL)
 """
 
+from typing import Union
+
 DIAS_MES = 30
 
 # Porcentaje de reconocimiento económico según el tipo de incapacidad.
 # Para agregar un nuevo tipo, basta con añadir una llave a este diccionario.
 TIPOS_INCAPACIDAD = {
-    "enfermedad_general": 0.6667,  # 66.67%
-    "maternidad": 1.0,             # 100%
-    "riesgo_laboral": 1.0,         # 100%
+    "enfermedad_general": 0.6667,
+    "maternidad": 1.0,
+    "riesgo_laboral": 1.0,
 }
 
 
@@ -38,13 +40,28 @@ class TipoIncapacidadInvalido(IncapacidadError):
     """Se dispara cuando el tipo de incapacidad no existe en TIPOS_INCAPACIDAD."""
 
 
+def _validar_numerico(valor: Union[int, float], nombre_campo: str) -> None:
+    """Valida que 'valor' sea numérico (int o float)."""
+    if not isinstance(valor, (int, float)):
+        raise TypeError(
+            f"Error: '{nombre_campo}' debe ser un valor numérico "
+            f"(recibido tipo {type(valor).__name__}: {valor!r}). "
+            f"Asegúrese de proveer un número."
+        )
+
+
 def validar_entradas(
     salario_mensual: float,
     dias_incapacidad: float,
     tipo_incapacidad: str
 ) -> float:
     """
-    Valida las entradas del cálculo y retorna el porcentaje de reconocimiento.
+    Valida las reglas de negocio para el cálculo de incapacidades en el siguiente orden:
+    1. Existencia del tipo de incapacidad.
+    2. Tipos de dato numéricos para salario y días.
+    3. Valores estrictamente positivos (>0) para salario y días.
+    
+    Retorna el porcentaje de reconocimiento aplicable.
     """
     try:
         porcentaje = TIPOS_INCAPACIDAD[tipo_incapacidad]
@@ -55,13 +72,19 @@ def validar_entradas(
             f"Use uno de: {tipos_validos}"
         )
 
-    try:
-        if salario_mensual <= 0:
-            raise SalarioInvalido(f"Error: el salario debe ser mayor a cero (valor recibido: {salario_mensual})")
-        if dias_incapacidad <= 0:
-            raise DiasIncapacidadInvalidos(f"Error: los días de incapacidad deben ser mayores a cero (valor recibido: {dias_incapacidad})")
-    except TypeError:
-        raise TypeError("Error: el salario y los días de incapacidad deben ser valores numéricos")
+    _validar_numerico(valor=salario_mensual, nombre_campo="salario_mensual")
+    _validar_numerico(valor=dias_incapacidad, nombre_campo="dias_incapacidad")
+
+    if salario_mensual <= 0:
+        raise SalarioInvalido(
+            f"Error: el salario debe ser un valor positivo mayor a cero "
+            f"(recibido: {salario_mensual}). Por favor asigne un salario válido."
+        )
+    if dias_incapacidad <= 0:
+        raise DiasIncapacidadInvalidos(
+            f"Error: los días de incapacidad deben ser un valor positivo mayor a cero "
+            f"(recibido: {dias_incapacidad}). Debe reportar al menos 1 día de incapacidad."
+        )
         
     return porcentaje
 
@@ -89,7 +112,11 @@ def calcular_pago_incapacidad(
         DiasIncapacidadInvalidos: Si los días de incapacidad son negativos o cero.
         TypeError: Si el salario o los días no son valores numéricos.
     """
-    porcentaje = validar_entradas(salario_mensual, dias_incapacidad, tipo_incapacidad)
+    porcentaje = validar_entradas(
+        salario_mensual=salario_mensual,
+        dias_incapacidad=dias_incapacidad,
+        tipo_incapacidad=tipo_incapacidad
+    )
 
     valor_dia = salario_mensual / DIAS_MES
     pago = valor_dia * porcentaje * dias_incapacidad
