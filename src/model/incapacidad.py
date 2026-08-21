@@ -34,8 +34,11 @@ class TipoIncapacidadInvalido(Exception):
     """Se dispara cuando el tipo de incapacidad no existe en TIPOS_INCAPACIDAD."""
 
 
-def calcular_pago_incapacidad(salario_mensual, dias_incapacidad,
-                               tipo_incapacidad="enfermedad_general"):
+def calcular_pago_incapacidad(
+    salario_mensual: int | float,
+    dias_incapacidad: int | float,
+    tipo_incapacidad: str = "enfermedad_general",
+) -> float:
     """
     Calcula el pago por incapacidad laboral.
 

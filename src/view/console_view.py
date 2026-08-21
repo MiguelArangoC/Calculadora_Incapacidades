@@ -1,12 +1,12 @@
 from src.model.incapacidad import *
 
-def mostrar_menu():
+def mostrar_menu() -> str:
     print("\n--- Calculadora de Pago por Incapacidad ---")
     print("1. Calcular incapacidad")
     print("2. Salir")
     return input("Seleccione una opción: ")
 
-def ejecutar():
+def ejecutar() -> None:
     while True:
         opcion = mostrar_menu()
         if opcion == "1":
