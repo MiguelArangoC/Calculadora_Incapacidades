@@ -2,13 +2,13 @@
 Módulo de cálculo de pago por incapacidad laboral en Colombia.
 
 Fórmula:
-valor_dia = salario_mensual / 30
-pago = valor_dia * porcentaje_reconocimiento * dias_incapacidad
+    valor_dia = salario_mensual / 30
+    pago = valor_dia * porcentaje_reconocimiento * dias_incapacidad
 
 El porcentaje de reconocimiento depende del tipo de incapacidad:
-- enfermedad_general: 66.67% (Decreto 3135 de 1968 / Ley 776 de 2002)
-- maternidad:         100%   (Art. 236 CST, modificado por la Ley 2114 de 2021)
-- riesgo_laboral:     100%   desde el primer día (Ley 776 de 2002, a cargo de la ARL)
+    - enfermedad_general: 66.67% (Decreto 3135 de 1968 / Ley 776 de 2002)
+    - maternidad: 100% (Art. 236 CST, modificado por la Ley 2114 de 2021)
+    - riesgo_laboral: 100% desde el primer día (Ley 776 de 2002, a cargo de la ARL)
 """
 
 from typing import Union
@@ -50,28 +50,17 @@ def _validar_numerico(valor: Union[int, float], nombre_campo: str) -> None:
         )
 
 
-def validar_entradas(
-    salario_mensual: float,
-    dias_incapacidad: float,
-    tipo_incapacidad: str
-) -> float:
+def validar_entradas(salario_mensual: float, dias_incapacidad: float) -> None:
     """
-    Valida las reglas de negocio para el cálculo de incapacidades en el siguiente orden:
-    1. Existencia del tipo de incapacidad.
-    2. Tipos de dato numéricos para salario y días.
-    3. Valores estrictamente positivos (>0) para salario y días.
-    
-    Retorna el porcentaje de reconocimiento aplicable.
-    """
-    try:
-        porcentaje = TIPOS_INCAPACIDAD[tipo_incapacidad]
-    except KeyError:
-        tipos_validos = ", ".join(TIPOS_INCAPACIDAD)
-        raise TipoIncapacidadInvalido(
-            f"Error: '{tipo_incapacidad}' no es un tipo de incapacidad válido. "
-            f"Use uno de: {tipos_validos}"
-        )
+    Valida las reglas de negocio de salario y días de incapacidad:
+        1. Tipos de dato numéricos para salario y días.
+        2. Valores estrictamente positivos (>0) para salario y días.
 
+    Raises:
+        TypeError: Si el salario o los días no son valores numéricos.
+        SalarioInvalido: Si el salario es negativo o cero.
+        DiasIncapacidadInvalidos: Si los días de incapacidad son negativos o cero.
+    """
     _validar_numerico(valor=salario_mensual, nombre_campo="salario_mensual")
     _validar_numerico(valor=dias_incapacidad, nombre_campo="dias_incapacidad")
 
@@ -80,13 +69,32 @@ def validar_entradas(
             f"Error: el salario debe ser un valor positivo mayor a cero "
             f"(recibido: {salario_mensual}). Por favor asigne un salario válido."
         )
+
     if dias_incapacidad <= 0:
         raise DiasIncapacidadInvalidos(
             f"Error: los días de incapacidad deben ser un valor positivo mayor a cero "
             f"(recibido: {dias_incapacidad}). Debe reportar al menos 1 día de incapacidad."
         )
-        
-    return porcentaje
+
+
+def obtener_porcentaje_reconocimiento(tipo_incapacidad: str) -> float:
+    """
+    Busca el porcentaje de reconocimiento económico asociado a un tipo de incapacidad.
+
+    Raises:
+        TipoIncapacidadInvalido: Si el tipo de incapacidad no existe en TIPOS_INCAPACIDAD.
+
+    Returns:
+        float: Porcentaje de reconocimiento aplicable.
+    """
+    try:
+        return TIPOS_INCAPACIDAD[tipo_incapacidad]
+    except KeyError:
+        tipos_validos = ", ".join(TIPOS_INCAPACIDAD)
+        raise TipoIncapacidadInvalido(
+            f"Error: '{tipo_incapacidad}' no es un tipo de incapacidad válido. "
+            f"Use uno de: {tipos_validos}"
+        )
 
 
 def calcular_pago_incapacidad(
@@ -112,14 +120,13 @@ def calcular_pago_incapacidad(
         DiasIncapacidadInvalidos: Si los días de incapacidad son negativos o cero.
         TypeError: Si el salario o los días no son valores numéricos.
     """
-    porcentaje = validar_entradas(
-        salario_mensual=salario_mensual,
-        dias_incapacidad=dias_incapacidad,
-        tipo_incapacidad=tipo_incapacidad
-    )
+    porcentaje = obtener_porcentaje_reconocimiento(tipo_incapacidad=tipo_incapacidad)
+    validar_entradas(salario_mensual=salario_mensual, dias_incapacidad=dias_incapacidad)
 
     valor_dia = salario_mensual / DIAS_MES
     pago = valor_dia * porcentaje * dias_incapacidad
+
     return pago
+
 
 
