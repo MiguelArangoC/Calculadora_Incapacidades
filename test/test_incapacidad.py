@@ -11,7 +11,7 @@ Ejecutar con:
     python -m unittest test_incapacidad.py -v
 """
 import unittest
-from src.model.incapacidad import *
+from src.model.incapacidad import calcular_pago_incapacidad, SalarioInvalido, DiasIncapacidadInvalidos, TipoIncapacidadInvalido
 # ---------------------------------------------------------------------------
 # CASOS NORMALES (1-3)
 # ---------------------------------------------------------------------------

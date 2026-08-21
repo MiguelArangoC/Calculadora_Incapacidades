@@ -22,40 +22,29 @@ TIPOS_INCAPACIDAD = {
 }
 
 
-class SalarioInvalido(Exception):
+class IncapacidadError(Exception):
+    """Clase base para las excepciones del cálculo de incapacidad."""
+
+
+class SalarioInvalido(IncapacidadError):
     """Se dispara cuando el salario mensual es cero o negativo."""
 
 
-class DiasIncapacidadInvalidos(Exception):
+class DiasIncapacidadInvalidos(IncapacidadError):
     """Se dispara cuando los días de incapacidad son cero o negativos."""
 
 
-class TipoIncapacidadInvalido(Exception):
+class TipoIncapacidadInvalido(IncapacidadError):
     """Se dispara cuando el tipo de incapacidad no existe en TIPOS_INCAPACIDAD."""
 
 
-def calcular_pago_incapacidad(
-    salario_mensual: int | float,
-    dias_incapacidad: int | float,
-    tipo_incapacidad: str = "enfermedad_general",
+def validar_entradas(
+    salario_mensual: float,
+    dias_incapacidad: float,
+    tipo_incapacidad: str
 ) -> float:
     """
-    Calcula el pago por incapacidad laboral.
-
-    Args:
-        salario_mensual (int | float): Salario mensual del empleado. Debe ser > 0.
-        dias_incapacidad (int | float): Número de días de incapacidad. Debe ser > 0.
-        tipo_incapacidad (str): Llave de TIPOS_INCAPACIDAD que determina el
-            porcentaje de reconocimiento (por defecto "enfermedad_general").
-
-    Returns:
-        float: Valor a pagar por incapacidad.
-
-    Raises:
-        TipoIncapacidadInvalido: Si el tipo de incapacidad no existe.
-        SalarioInvalido: Si el salario es negativo o cero.
-        DiasIncapacidadInvalidos: Si los días de incapacidad son negativos o cero.
-        TypeError: Si el salario o los días no son valores numéricos.
+    Valida las entradas del cálculo y retorna el porcentaje de reconocimiento.
     """
     try:
         porcentaje = TIPOS_INCAPACIDAD[tipo_incapacidad]
@@ -68,11 +57,39 @@ def calcular_pago_incapacidad(
 
     try:
         if salario_mensual <= 0:
-            raise SalarioInvalido("Error: el salario no puede ser negativo o cero")
+            raise SalarioInvalido(f"Error: el salario debe ser mayor a cero (valor recibido: {salario_mensual})")
         if dias_incapacidad <= 0:
-            raise DiasIncapacidadInvalidos("Error: los días de incapacidad no pueden ser negativos o cero")
+            raise DiasIncapacidadInvalidos(f"Error: los días de incapacidad deben ser mayores a cero (valor recibido: {dias_incapacidad})")
     except TypeError:
         raise TypeError("Error: el salario y los días de incapacidad deben ser valores numéricos")
+        
+    return porcentaje
+
+
+def calcular_pago_incapacidad(
+    salario_mensual: float,
+    dias_incapacidad: float,
+    tipo_incapacidad: str = "enfermedad_general",
+) -> float:
+    """
+    Calcula el pago por incapacidad laboral.
+
+    Args:
+        salario_mensual (float): Salario mensual del empleado. Debe ser > 0.
+        dias_incapacidad (float): Número de días de incapacidad. Debe ser > 0.
+        tipo_incapacidad (str): Llave de TIPOS_INCAPACIDAD que determina el
+            porcentaje de reconocimiento (por defecto "enfermedad_general").
+
+    Returns:
+        float: Valor a pagar por incapacidad.
+
+    Raises:
+        TipoIncapacidadInvalido: Si el tipo de incapacidad no existe.
+        SalarioInvalido: Si el salario es negativo o cero.
+        DiasIncapacidadInvalidos: Si los días de incapacidad son negativos o cero.
+        TypeError: Si el salario o los días no son valores numéricos.
+    """
+    porcentaje = validar_entradas(salario_mensual, dias_incapacidad, tipo_incapacidad)
 
     valor_dia = salario_mensual / DIAS_MES
     pago = valor_dia * porcentaje * dias_incapacidad

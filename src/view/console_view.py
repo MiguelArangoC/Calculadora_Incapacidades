@@ -1,4 +1,4 @@
-from src.model.incapacidad import *
+from src.model.incapacidad import calcular_pago_incapacidad, TIPOS_INCAPACIDAD, IncapacidadError
 
 def mostrar_menu() -> str:
     print("\n--- Calculadora de Pago por Incapacidad ---")
@@ -31,12 +31,12 @@ def ejecutar() -> None:
                     print("Error: Opción de tipo de incapacidad inválida.")
                     continue
                 
-                pago = calcular_pago_incapacidad(salario, dias, tipo_seleccionado)
+                pago = calcular_pago_incapacidad(salario_mensual=salario, dias_incapacidad=dias, tipo_incapacidad=tipo_seleccionado)
                 print(f"\n>> El valor a pagar por incapacidad es: ${pago:,.2f} COP")
                 
             except ValueError:
                 print("Error: Por favor, ingrese valores numéricos válidos para el salario, días y tipo de incapacidad.")
-            except (SalarioInvalido, DiasIncapacidadInvalidos, TipoIncapacidadInvalido) as e:
+            except IncapacidadError as e:
                 print(f"\n{e}")
             except Exception as e:
                 print(f"\nError inesperado: {e}")
