@@ -127,6 +127,3 @@ def calcular_pago_incapacidad(
     pago = valor_dia * porcentaje * dias_incapacidad
 
     return pago
-
-
-

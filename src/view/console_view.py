@@ -1,5 +1,8 @@
 from src.model.incapacidad import calcular_pago_incapacidad, TIPOS_INCAPACIDAD, IncapacidadError
 
+class OpcionInvalida(ValueError):
+    """Excepción lanzada cuando el usuario ingresa una opción de tipo de incapacidad inválida."""
+
 def mostrar_menu() -> str:
     print("\n--- Calculadora de Pago por Incapacidad ---")
     print("1. Calcular incapacidad")
@@ -30,7 +33,7 @@ def seleccionar_tipo_incapacidad() -> str:
     if 0 <= indice_tipo < len(tipos_lista):
         return tipos_lista[indice_tipo]
     else:
-        raise ValueError("Opción de tipo de incapacidad inválida.")
+        raise OpcionInvalida("Opción de tipo de incapacidad inválida.")
 
 def procesar_calculo(salario: float, dias: float, tipo_seleccionado: str) -> None:
     """Realiza el cálculo de la incapacidad e imprime el resultado."""
@@ -42,12 +45,11 @@ def procesar_opcion_calcular() -> None:
     try:
         salario, dias = leer_datos_incapacidad()
         tipo_seleccionado = seleccionar_tipo_incapacidad()
-        procesar_calculo(salario, dias, tipo_seleccionado)
-    except ValueError as e:
-        if str(e) == "Opción de tipo de incapacidad inválida.":
-            print("Error: Opción de tipo de incapacidad inválida.")
-        else:
-            print("Error: Por favor, ingrese valores numéricos válidos para el salario, días y tipo de incapacidad.")
+        procesar_calculo(salario=salario, dias=dias, tipo_seleccionado=tipo_seleccionado)
+    except OpcionInvalida as e:
+        print(f"Error: {e}")
+    except ValueError:
+        print("Error: Por favor, ingrese valores numéricos válidos para el salario, días y tipo de incapacidad.")
     except IncapacidadError as e:
         print(f"\n{e}")
 
