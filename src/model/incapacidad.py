@@ -50,19 +50,17 @@ def _validar_numerico(valor: Union[int, float], nombre_campo: str) -> None:
         )
 
 
-def validar_entradas(salario_mensual: float, dias_incapacidad: float) -> None:
+def validar_salario(salario_mensual: float) -> None:
     """
-    Valida las reglas de negocio de salario y días de incapacidad:
-        1. Tipos de dato numéricos para salario y días.
-        2. Valores estrictamente positivos (>0) para salario y días.
+    Valida las reglas de negocio del salario mensual:
+        1. Debe ser un valor numérico.
+        2. Debe ser estrictamente positivo (>0).
 
     Raises:
-        TypeError: Si el salario o los días no son valores numéricos.
+        TypeError: Si el salario no es un valor numérico.
         SalarioInvalido: Si el salario es negativo o cero.
-        DiasIncapacidadInvalidos: Si los días de incapacidad son negativos o cero.
     """
     _validar_numerico(valor=salario_mensual, nombre_campo="salario_mensual")
-    _validar_numerico(valor=dias_incapacidad, nombre_campo="dias_incapacidad")
 
     if salario_mensual <= 0:
         raise SalarioInvalido(
@@ -70,11 +68,38 @@ def validar_entradas(salario_mensual: float, dias_incapacidad: float) -> None:
             f"(recibido: {salario_mensual}). Por favor asigne un salario válido."
         )
 
+
+def validar_dias_incapacidad(dias_incapacidad: float) -> None:
+    """
+    Valida las reglas de negocio de los días de incapacidad:
+        1. Deben ser un valor numérico.
+        2. Deben ser estrictamente positivos (>0).
+
+    Raises:
+        TypeError: Si los días no son un valor numérico.
+        DiasIncapacidadInvalidos: Si los días de incapacidad son negativos o cero.
+    """
+    _validar_numerico(valor=dias_incapacidad, nombre_campo="dias_incapacidad")
+
     if dias_incapacidad <= 0:
         raise DiasIncapacidadInvalidos(
             f"Error: los días de incapacidad deben ser un valor positivo mayor a cero "
             f"(recibido: {dias_incapacidad}). Debe reportar al menos 1 día de incapacidad."
         )
+
+
+def validar_entradas(salario_mensual: float, dias_incapacidad: float) -> None:
+    """
+    Orquesta la validación de las entradas del cálculo de incapacidad,
+    delegando cada regla de negocio a su propio validador.
+
+    Raises:
+        TypeError: Si el salario o los días no son valores numéricos.
+        SalarioInvalido: Si el salario es negativo o cero.
+        DiasIncapacidadInvalidos: Si los días de incapacidad son negativos o cero.
+    """
+    validar_salario(salario_mensual=salario_mensual)
+    validar_dias_incapacidad(dias_incapacidad=dias_incapacidad)
 
 
 def obtener_porcentaje_reconocimiento(tipo_incapacidad: str) -> float:
