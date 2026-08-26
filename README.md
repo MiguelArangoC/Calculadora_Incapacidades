@@ -54,7 +54,7 @@ Aunque la función ya distingue entre enfermedad general, maternidad y riesgo la
 Arquitectura de carpetas
 
 El proyecto sigue una separación simple entre lógica de negocio (modelo) e interfaz de usuario (vista):
-
+```bash
 Calculadora_Incapacidades/
 ├── README.md
 ├── doc/
@@ -71,6 +71,7 @@ Calculadora_Incapacidades/
 └── test/
     ├── __init__.py
     └── test_incapacidad.py             # Pruebas unitarias del módulo de cálculo
+```
 src/model/incapacidad.py: contiene toda la lógica de negocio (validaciones, TIPOS_INCAPACIDAD y la función calcular_pago_incapacidad), sin ninguna dependencia de la interfaz de usuario.
 src/view/console_view.py: capa de presentación que consume el modelo y gestiona la interacción por consola (menú, entradas del usuario, mensajes de error).
 test/test_incapacidad.py: pruebas unitarias que validan el módulo incapacidad.py de forma aislada.
