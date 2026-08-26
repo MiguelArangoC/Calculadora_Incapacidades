@@ -88,15 +88,19 @@ python -m src.view.console_view
 
 Al ejecutarlo, verás un menú interactivo que te pedirá ingresar el salario, los días de incapacidad y seleccionar el tipo de incapacidad para luego mostrar el monto total a pagar.
 
-## Pruebas (Tests)
+Pruebas (Tests)
 
-El proyecto incluye un archivo `test_incapacidad.py` que se puede ejecutar para verificar el correcto funcionamiento del programa frente a diversos casos normales, extraordinarios y de error (incluyendo los tres tipos de incapacidad y las tres excepciones propias).
+El proyecto incluye, dentro de la carpeta test/, un archivo test_incapacidad.py que se puede ejecutar para verificar el correcto funcionamiento del programa frente a diversos casos normales, extraordinarios y de error (incluyendo los tres tipos de incapacidad y las tres excepciones propias).
 
-```bash
-python -m unittest test_incapacidad.py -v
-```
+Para ejecutar las pruebas unitarias, ubícate en el directorio raíz del proyecto (donde está este README.md) y ejecuta:
 
-## Integrantes
+bash
+python -m unittest test.test_incapacidad -v
 
-- Miguel Angel Arango Cardona
-- Juan Camilo García Castro
+También puedes ejecutar todas las pruebas del proyecto (útil si en el futuro se agregan más archivos de prueba a la carpeta test/) con:
+
+bash
+python -m unittest discover -s test -v
+Integrantes
+Miguel Angel Arango Cardona
+Juan Camilo García Castro
