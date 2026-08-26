@@ -51,6 +51,30 @@ Aunque la función ya distingue entre enfermedad general, maternidad y riesgo la
 - **No calcula por tramos:** para `enfermedad_general`, la ley real varía el porcentaje según el tramo de días (66.67% del día 1 al 90, 50% del día 91 al 180). La función aplica un único porcentaje fijo a la totalidad de los días ingresados.
 - **No reproduce reglas adicionales de `riesgo_laboral`:** por ejemplo, no contempla que los dos primeros días de una incapacidad por enfermedad general corren por cuenta del empleador, ni otras condiciones administrativas propias de la ARL o la EPS.
 
+Arquitectura de carpetas
+
+El proyecto sigue una separación simple entre lógica de negocio (modelo) e interfaz de usuario (vista):
+
+Calculadora_Incapacidades/
+├── README.md
+├── doc/
+│   ├── casos_prueba_incapacidad.xlsx # Casos de prueba documentados (normales, extraordinarios, error)
+│   ├── Entrevista1.ogg # Entrevista con experto del tema
+│   └── Entrevista2.ogg # Continuación de la entrevista
+├── src/
+│   ├── __init__.py
+│   ├── model/
+│   │   ├── __init__.py
+│   │   └── incapacidad.py              # Lógica de cálculo: calcular_pago_incapacidad, TIPOS_INCAPACIDAD y excepciones propias
+│   └── view/
+│       └── console_view.py             # Interfaz de consola interactiva
+└── test/
+    ├── __init__.py
+    └── test_incapacidad.py             # Pruebas unitarias del módulo de cálculo
+src/model/incapacidad.py: contiene toda la lógica de negocio (validaciones, TIPOS_INCAPACIDAD y la función calcular_pago_incapacidad), sin ninguna dependencia de la interfaz de usuario.
+src/view/console_view.py: capa de presentación que consume el modelo y gestiona la interacción por consola (menú, entradas del usuario, mensajes de error).
+test/test_incapacidad.py: pruebas unitarias que validan el módulo incapacidad.py de forma aislada.
+
 ## Ejecución (Ejecutar el programa)
 
 El proyecto cuenta con una interfaz de consola interactiva (`console_view`) que permite a los usuarios calcular el pago por incapacidad de forma guiada.
