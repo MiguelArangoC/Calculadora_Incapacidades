@@ -94,13 +94,16 @@ El proyecto incluye, dentro de la carpeta test/, un archivo test_incapacidad.py 
 
 Para ejecutar las pruebas unitarias, ubícate en el directorio raíz del proyecto (donde está este README.md) y ejecuta:
 
-bash
+```bash
 python -m unittest test.test_incapacidad -v
+```
 
 También puedes ejecutar todas las pruebas del proyecto (útil si en el futuro se agregan más archivos de prueba a la carpeta test/) con:
 
-bash
+```bash
 python -m unittest discover -s test -v
+```
+
 Integrantes
 Miguel Angel Arango Cardona
 Juan Camilo García Castro
