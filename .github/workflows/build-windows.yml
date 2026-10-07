@@ -41,7 +41,7 @@ jobs:
           --windowed
           --name CalculadoraIncapacidades
           --paths .
-          src/view/gui/main.py
+          src/view/gui/app.py
 
       - name: Guardar ejecutable
         uses: actions/upload-artifact@v4
