@@ -126,14 +126,15 @@ La capa de base de datos sigue el modelo arquitectónico y las buenas prácticas
 
 ### Tablas del sistema
 
-| Tabla | Tipo | Descripción |
-| ----- | ---- | ----------- |
+| Tabla               | Tipo                 | Descripción                                                          |
+| ------------------- | -------------------- | -------------------------------------------------------------------- |
 | `tipos_incapacidad` | Catálogo (DDL + DML) | Tipos legales (`enfermedad_general`, `maternidad`, `riesgo_laboral`) |
-| `casos_incapacidad` | Transaccional (DDL) | Registros guardados (fecha, tipo_id, salario, días, valor a pagar) |
+| `casos_incapacidad` | Transaccional (DDL)  | Registros guardados (fecha, tipo_id, salario, días, valor a pagar)   |
 
 ### Scripts SQL (`sql/`)
 
 Se encuentran organizados en la carpeta `sql/` con sintaxis estándar PostgreSQL y compatibilidad SQLite:
+
 - `crear-tipos-incapacidad.sql`: Crea la tabla `tipos_incapacidad`.
 - `datos-tipos-incapacidad.sql`: Inserta los valores por defecto del catálogo.
 - `crear-casos-incapacidad.sql`: Crea la tabla con clave foránea a `tipos_incapacidad` y restricciones `CHECK` de valores positivos.
@@ -161,6 +162,7 @@ copy secret_config_sample.py secret_config.py     # Windows
 ```
 
 Configura tu base de datos PostgreSQL (en Render, Neon o local):
+
 ```python
 DB_DRIVER = "postgresql+psycopg2"
 DB_USER = "tu_usuario"
@@ -194,7 +196,7 @@ python consultar_casos.py
 ## Instalación
 
 ```bash
-git clone https://github.com/IRVMakiAkame0/Calculadora_Incapacidades.git
+git clone https://github.com/MiguelArangoC/Calculadora_Incapacidades.git
 cd Calculadora_Incapacidades
 
 python -m venv .venv
@@ -285,7 +287,7 @@ Lógica inicial del proyecto suministrada por el docente:
 - Miguel Ángel Arango Cardona
 - Juan Camilo García Castro
 
-### Desarrollo y ampliación
+### Desarrollo de GUI y aplicación móvil
 
 | Integrante              | GitHub                                             |
 | ----------------------- | -------------------------------------------------- |
