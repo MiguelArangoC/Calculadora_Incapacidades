@@ -3,6 +3,7 @@
 import platform
 import subprocess
 
+from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.graphics import Color, Line, RoundedRectangle
 from kivy.metrics import dp
@@ -23,15 +24,10 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.textfield import MDTextField, MDTextFieldHintText
 
-from src.database.database import (
-    crear_base_datos,
-    guardar_caso,
-    obtener_casos,
-)
-from src.model.incapacidad import (
-    IncapacidadError,
-    calcular_pago_incapacidad,
-)
+from src.controller.incapacidad_controller import IncapacidadController
+from src.model.incapacidad import IncapacidadError
+
+controller = IncapacidadController()
 
 
 # ============================================================
@@ -1583,12 +1579,8 @@ class CalculadoraIncapacidadGUI(BoxLayout):
         """Obtiene los datos, calcula y guarda el resultado."""
         try:
             datos = self.obtener_datos_formulario()
-            pago = self.calcular_pago(datos)
 
-            self.guardar_resultado(
-                datos=datos,
-                pago=pago,
-            )
+            self.guardar_resultado(datos)
 
         except (ValueError, IncapacidadError) as error:
             self.mostrar_error(str(error))
@@ -1618,32 +1610,19 @@ class CalculadoraIncapacidadGUI(BoxLayout):
             "tipo_incapacidad": tipo_incapacidad,
         }
 
-    def calcular_pago(self, datos: dict) -> float:
-        """Calcula el pago correspondiente a los datos recibidos."""
-        return calcular_pago_incapacidad(
-            salario_mensual=datos["salario"],
-            dias_incapacidad=datos["dias"],
-            tipo_incapacidad=datos["tipo_incapacidad"],
-        )
-
-    def guardar_resultado(
-        self,
-        datos: dict,
-        pago: float,
-    ) -> None:
-        """Guarda el cálculo y actualiza la interfaz."""
-        id_caso = guardar_caso(
-            tipo_incapacidad=datos["tipo_mostrado"],
+    def guardar_resultado(self, datos: dict) -> None:
+        """Calcula y guarda el caso (INSERT) y actualiza la interfaz."""
+        caso = controller.insertar_caso(
             salario=datos["salario"],
             dias=datos["dias"],
-            pago=pago,
+            tipo_incapacidad=datos["tipo_incapacidad"],
         )
 
         self.mostrar_resultado(
             tipo_incapacidad=datos["tipo_mostrado"],
             dias=datos["dias"],
-            pago=pago,
-            id_caso=id_caso,
+            pago=caso["pago"],
+            id_caso=caso["id"],
         )
 
         self.cargar_historial()
@@ -1733,7 +1712,13 @@ class CalculadoraIncapacidadGUI(BoxLayout):
 
     def cargar_historial(self) -> None:
         """Carga en pantalla los casos guardados."""
-        casos = obtener_casos()
+        try:
+            casos = controller.listar_casos()
+        except IncapacidadError as error:
+            self.texto_historial.text = str(error).replace(
+                "Error: ", ""
+            )
+            return
 
         if not casos:
             self.texto_historial.text = TEXTO_HISTORIAL_VACIO
@@ -1750,7 +1735,7 @@ class CalculadoraIncapacidadGUI(BoxLayout):
         """Convierte un caso almacenado en texto."""
         return (
             f"Caso {caso['id']} | "
-            f"{caso['tipo_incapacidad']} | "
+            f"{caso['tipo_nombre']} | "
             f"{caso['dias']} días\n"
             f"Salario: {formatear_cop(caso['salario'])} | "
             f"Pago: {formatear_cop(caso['pago'])}"
@@ -1815,12 +1800,24 @@ class CalculadoraIncapacidadesApp(MDApp):
 
     def build(self) -> CalculadoraIncapacidadGUI:
         """Inicializa la base de datos y construye la interfaz."""
-        crear_base_datos()
+        try:
+            controller.crear_tablas()
+            error_inicial = None
+        except IncapacidadError as error:
+            error_inicial = str(error)
 
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
 
-        return CalculadoraIncapacidadGUI()
+        interfaz = CalculadoraIncapacidadGUI()
+
+        if error_inicial:
+            Clock.schedule_once(
+                lambda _dt: interfaz.mostrar_error(error_inicial),
+                0.5,
+            )
+
+        return interfaz
 
 
 if __name__ == "__main__":

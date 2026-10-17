@@ -115,3 +115,5 @@ Calculadora_Incapacidades_Windows.zip
 
 # Conservar configuración de Buildozer para Android
 !buildozer.spec
+# Configuracion privada de la base de datos
+secret_config.py
