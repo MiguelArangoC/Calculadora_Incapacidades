@@ -120,7 +120,7 @@ Calculadora_Incapacidades/
 
 ---
 
-## Base de datos
+## Base de datos (ORM)
 
 La capa de base de datos sigue el modelo arquitectónico y las buenas prácticas del repositorio de referencia [database-01](https://github.com/ProfeBill/database-01), adaptándolo al dominio de cálculo y registro de incapacidades laborales en Colombia.
 
@@ -152,7 +152,23 @@ Se encuentran organizados en la carpeta `sql/` con sintaxis estándar PostgreSQL
 4. **`python consultar_casos.py`**:
    Consulta los casos registrados usando `SELECT ... JOIN` y los presenta tabulados.
 
-### 1. Configuración de la base de datos
+### 1. Creación y configuración de la base de datos
+
+#### A. Crear la base de datos en el servidor (PostgreSQL / MySQL)
+
+Si utilizas un servidor PostgreSQL (local, Docker o en la nube como Render o Neon), crea la base de datos antes de ejecutar los scripts de creación de tablas:
+
+```bash
+# Con psql (PostgreSQL):
+psql -U postgres -c "CREATE DATABASE incapacidades;"
+
+# O con la utilidad createdb de PostgreSQL:
+createdb -U postgres incapacidades
+```
+
+> **Nota para SQLite:** Si no deseas configurar un servidor PostgreSQL, no requieres crear ninguna base de datos previa. Si omites `secret_config.py` o configuras `DB_DRIVER = "sqlite"`, el sistema creará y usará automáticamente un archivo local `incapacidades.db`.
+
+#### B. Configurar credenciales de conexión (`secret_config.py`)
 
 Copia la plantilla y edítala con tus datos:
 
@@ -161,20 +177,20 @@ copy secret_config_sample.py secret_config.py     # Windows
 # cp secret_config_sample.py secret_config.py     # Linux/macOS
 ```
 
-Configura tu base de datos PostgreSQL (en Render, Neon o local):
+Configura los datos de tu base de datos:
 
 ```python
 DB_DRIVER = "postgresql+psycopg2"
 DB_USER = "tu_usuario"
 DB_PASSWORD = "tu_password"
-DB_HOST = "tu_host.render.com"  # O localhost
+DB_HOST = "localhost"  # O tu host en Render / Neon
 DB_PORT = 5432
-DB_NAME = "tu_base_datos"
+DB_NAME = "incapacidades"
 ```
 
-> **Nota:** Si `secret_config.py` no existe o tiene `DB_DRIVER = "sqlite"`, el sistema funciona automáticamente con un archivo local SQLite (`incapacidades.db`).
+### 2. Crear las tablas y probar la conexión
 
-### 2. Crear las tablas y probar
+Una vez creada la base de datos y configurado `secret_config.py`:
 
 ```bash
 python probar_conexion.py
@@ -187,7 +203,7 @@ python consultar_casos.py
 
 ## Requisitos
 
-- Python 3.12 (recomendado).
+- Python 3.12 (Obligatorio), una versión mayor de Python no correrá la interfaz gráfica.
 - Git.
 - Dependencias listadas en `requirements.txt`.
 
@@ -211,20 +227,31 @@ python -m pip install -r requirements.txt
 
 ## Ejecución
 
-### Interfaz gráfica
+### Interfaz gráfica (KivyMD)
 
 ```bash
 python main.py
 ```
 
-### Consola
+La interfaz gráfica permite:
+
+- **Calcular y guardar incapacidades (INSERT):** ingresa salario, días y selecciona el tipo de incapacidad con los botones de selección; al pulsar _"Calcular Pago"_ se liquida el valor y se guarda el caso en la base de datos.
+- **Buscar y consultar casos (SELECT):** en la tarjeta _"Historial de Cálculos"_, dispone de un campo de texto para buscar por ID de caso, tipo o fecha (`AAAA-MM-DD`), botón _"Buscar"_ y botón _"Todos"_ para restaurar el listado completo.
+
+### Interfaz de consola
 
 ```bash
 python -m src.view.console.cli
 ```
 
-La consola permite calcular y guardar, buscar y listar casos, y crear o borrar
-las tablas (ver [Base de datos](#base-de-datos-orm)).
+Ofrece un menú interactivo con las siguientes opciones:
+
+1. **Calcular y guardar incapacidad:** solicita los datos, calcula el pago y registra el caso en la base de datos.
+2. **Buscar casos guardados:** permite filtrar registros por ID, fecha o tipo de incapacidad.
+3. **Ver todos los casos:** lista todos los registros guardados del más reciente al más antiguo.
+4. **Crear tablas:** ejecuta la creación de tablas DDL y la carga del catálogo inicial.
+5. **Borrar tablas:** elimina las tablas y sus registros previa confirmación del usuario.
+6. **Salir.**
 
 ---
 
