@@ -6,6 +6,7 @@
 --              y de verificación (CHECK) de datos válidos.
 -- ============================================================
 
+
 CREATE TABLE IF NOT EXISTS casos_incapacidad (
     id SERIAL PRIMARY KEY,
     fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
