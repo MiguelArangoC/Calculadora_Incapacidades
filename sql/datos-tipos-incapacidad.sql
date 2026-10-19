@@ -7,10 +7,11 @@
 --              - Maternidad (reconoce 100%)
 --              - Riesgo Laboral (reconoce 100%)
 -- ============================================================
-
 INSERT INTO tipos_incapacidad (clave, nombre)
 VALUES 
     ('enfermedad_general', 'Enfermedad General'),
     ('maternidad', 'Maternidad'),
     ('riesgo_laboral', 'Riesgo Laboral')
 ON CONFLICT (clave) DO NOTHING;
+
+
