@@ -101,7 +101,7 @@ ALTURA_BOTON = dp(48)
 # Alturas de las tarjetas desplegables
 ALTURA_CABECERA_DESPLEGABLE = dp(72)
 ALTURA_RESULTADO_EXPANDIDO = dp(170)
-ALTURA_HISTORIAL_EXPANDIDO = dp(300)
+ALTURA_HISTORIAL_EXPANDIDO = dp(380)
 ALTURA_INFORMACION_EXPANDIDA = dp(255)
 
 TEXTO_EXPANDIR = "+"
@@ -576,7 +576,7 @@ class CalculadoraIncapacidadGUI(BoxLayout):
             self.contenedor_botones_accion.orientation = "vertical"
             self.contenedor_botones_accion.height = dp(108)
             
-            self.tarjeta_historial.height = dp(300)
+            self.tarjeta_historial.height = dp(380)
             
             self.tarjeta_resultado.height = ALTURA_RESULTADO_EXPANDIDO
             self.contenido_resultado.height = dp(60)
@@ -1123,14 +1123,14 @@ class CalculadoraIncapacidadGUI(BoxLayout):
         self,
         contenido: BoxLayout,
     ) -> None:
-        """Crea la tarjeta fija del historial."""
+        """Crea la tarjeta fija del historial con buscador integrado."""
 
         self.tarjeta_historial = Tarjeta(
             orientation="vertical",
-            spacing=dp(5),
-            padding=[dp(24), dp(8), dp(18), dp(8)],
+            spacing=dp(8),
+            padding=[dp(24), dp(10), dp(18), dp(10)],
             size_hint_y=None,
-            height=dp(300),
+            height=ALTURA_HISTORIAL_EXPANDIDO,
         )
 
         # Estado inicial
@@ -1150,7 +1150,7 @@ class CalculadoraIncapacidadGUI(BoxLayout):
             orientation="horizontal",
             spacing=dp(8),
             size_hint_y=None,
-            height=dp(50),
+            height=dp(40),
         )
 
         self.titulo_historial = self.crear_label(
@@ -1169,7 +1169,55 @@ class CalculadoraIncapacidadGUI(BoxLayout):
             self.titulo_historial
         )
 
+        # ====================================================
+        # BUSCADOR
+        # ====================================================
 
+        contenedor_busqueda = BoxLayout(
+            orientation="horizontal",
+            spacing=dp(8),
+            size_hint_y=None,
+            height=ALTURA_CAMPO,
+        )
+
+        self.entrada_busqueda = CampoTexto(
+            hint_text="Buscar por ID, tipo o fecha...",
+            multiline=False,
+            size_hint_y=None,
+            height=ALTURA_CAMPO,
+        )
+        self.entrada_busqueda.bind(
+            on_text_validate=self.buscar_casos_gui
+        )
+        self.campos.append(self.entrada_busqueda)
+
+        self.boton_buscar = BotonRedondeado(
+            text="Buscar",
+            style="filled",
+            size_hint=(None, None),
+            width=dp(90),
+            height=ALTURA_CAMPO,
+        )
+        self.boton_buscar.texto_boton.font_size = "14sp"
+        self.boton_buscar.bind(
+            on_release=self.buscar_casos_gui
+        )
+
+        self.boton_limpiar_busqueda = BotonRedondeado(
+            text="Todos",
+            style="outlined",
+            size_hint=(None, None),
+            width=dp(75),
+            height=ALTURA_CAMPO,
+        )
+        self.boton_limpiar_busqueda.texto_boton.font_size = "14sp"
+        self.boton_limpiar_busqueda.bind(
+            on_release=self.limpiar_busqueda_gui
+        )
+
+        contenedor_busqueda.add_widget(self.entrada_busqueda)
+        contenedor_busqueda.add_widget(self.boton_buscar)
+        contenedor_busqueda.add_widget(self.boton_limpiar_busqueda)
 
         # ====================================================
         # CONTENIDO
@@ -1182,18 +1230,18 @@ class CalculadoraIncapacidadGUI(BoxLayout):
             height=dp(220),
         )
 
-        descripcion = self.crear_label(
+        self.descripcion_historial = self.crear_label(
             "Últimos cálculos realizados",
             secundario=True,
             font_size="13sp",
             size_hint_y=None,
-            height=dp(35),
+            height=dp(30),
             halign="left",
             valign="middle",
         )
 
         configurar_texto_ajustable(
-            descripcion
+            self.descripcion_historial
         )
 
         self.scroll_historial = ScrollView(
@@ -1238,7 +1286,7 @@ class CalculadoraIncapacidadGUI(BoxLayout):
         )
 
         self.contenido_historial.add_widget(
-            descripcion
+            self.descripcion_historial
         )
 
         self.contenido_historial.add_widget(
@@ -1247,6 +1295,10 @@ class CalculadoraIncapacidadGUI(BoxLayout):
 
         self.tarjeta_historial.add_widget(
             cabecera
+        )
+
+        self.tarjeta_historial.add_widget(
+            contenedor_busqueda
         )
 
         self.tarjeta_historial.add_widget(
@@ -1561,6 +1613,13 @@ class CalculadoraIncapacidadGUI(BoxLayout):
         self.boton_limpiar.md_bg_color = (
             paleta["tarjeta_secundaria"]
         )
+
+        if hasattr(self, "boton_buscar"):
+            self.boton_buscar.md_bg_color = paleta["azul"]
+        if hasattr(self, "boton_limpiar_busqueda"):
+            self.boton_limpiar_busqueda.md_bg_color = (
+                paleta["tarjeta_secundaria"]
+            )
         
         for boton in (
             self.boton_resultado,
@@ -1625,6 +1684,8 @@ class CalculadoraIncapacidadGUI(BoxLayout):
             id_caso=caso["id"],
         )
 
+        if hasattr(self, "entrada_busqueda"):
+            self.entrada_busqueda.text = ""
         self.cargar_historial()
 
     def mostrar_resultado(
@@ -1707,11 +1768,52 @@ class CalculadoraIncapacidadGUI(BoxLayout):
             ) from error
 
     # ========================================================
-    # HISTORIAL
+    # HISTORIAL Y BÚSQUEDA
     # ========================================================
 
+    def buscar_casos_gui(self, *_args) -> None:
+        """Busca casos por ID, fecha o tipo según el texto ingresado."""
+        texto = self.entrada_busqueda.text.strip()
+        if not texto:
+            self.cargar_historial()
+            return
+
+        try:
+            casos = controller.buscar_casos(texto)
+        except IncapacidadError as error:
+            self.mostrar_error(str(error))
+            return
+
+        if not casos:
+            if hasattr(self, "descripcion_historial"):
+                self.descripcion_historial.text = (
+                    f"Sin resultados para: '{texto}'"
+                )
+            self.texto_historial.text = (
+                f"No se encontraron casos que coincidan con '{texto}'."
+            )
+            return
+
+        if hasattr(self, "descripcion_historial"):
+            self.descripcion_historial.text = (
+                f"{len(casos)} caso(s) encontrado(s) para '{texto}':"
+            )
+        registros = [
+            self.formatear_caso_historial(caso)
+            for caso in casos
+        ]
+        self.texto_historial.text = "\n\n".join(registros)
+
+    def limpiar_busqueda_gui(self, *_args) -> None:
+        """Limpia el campo de búsqueda y recarga todo el historial."""
+        self.entrada_busqueda.text = ""
+        self.cargar_historial()
+
     def cargar_historial(self) -> None:
-        """Carga en pantalla los casos guardados."""
+        """Carga en pantalla todos los casos guardados."""
+        if hasattr(self, "descripcion_historial"):
+            self.descripcion_historial.text = "Últimos cálculos realizados"
+
         try:
             casos = controller.listar_casos()
         except IncapacidadError as error:
