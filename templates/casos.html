@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Incapacidades{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header header-with-action">
+        <div>
+            <h2>Historial de Incapacidades Registradas</h2>
+            <p class="subtitle">Listado de casos calculados y almacenados en la base de datos</p>
+        </div>
+        <div class="actions-header">
+            <a href="/buscar" class="btn btn-secondary btn-sm">🔍 Buscar Caso</a>
+            <a href="/" class="btn btn-primary btn-sm">+ Nuevo Cálculo</a>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-warning">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-content">
+            <p>{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if casos %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Tipo de Incapacidad</th>
+                    <th>Días</th>
+                    <th>Salario Base</th>
+                    <th>Pago Liquidado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in casos %}
+                <tr>
+                    <td><strong>#{{ c.id }}</strong></td>
+                    <td>{{ c.fecha }}</td>
+                    <td>
+                        <span class="badge {% if 'maternidad' in c.tipo_incapacidad %}badge-success{% elif 'riesgo' in c.tipo_incapacidad %}badge-warning{% else %}badge-info{% endif %}">
+                            {{ c.tipo_nombre }}
+                        </span>
+                    </td>
+                    <td>{{ c.dias }} días</td>
+                    <td>${{ "{:,.2f}".format(c.salario) }}</td>
+                    <td><strong class="text-accent">${{ "{:,.2f}".format(c.pago) }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="tfoot-summary">
+                    <td colspan="3"><strong>Total de registros: {{ casos | length }}</strong></td>
+                    <td><strong>{{ casos | sum(attribute='dias') }} días</strong></td>
+                    <td>-</td>
+                    <td><strong>${{ "{:,.2f}".format(casos | sum(attribute='pago')) }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">📂</span>
+        <h3>No hay casos registrados aún</h3>
+        <p>Aún no se han guardado cálculos de incapacidades en la base de datos.</p>
+        <a href="/" class="btn btn-primary">Crear el primer cálculo</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

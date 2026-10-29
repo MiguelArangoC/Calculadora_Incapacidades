@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Resultado de Liquidación{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <div class="card result-card">
+        <div class="card-header text-center">
+            <span class="success-badge-icon">✅</span>
+            <h2>Resultado de la Liquidación</h2>
+            <p class="subtitle">Cálculo del auxilio económico por incapacidad laboral</p>
+        </div>
+
+        <div class="highlight-pago">
+            <span class="pago-label">Valor total a pagar</span>
+            <div class="pago-valor">${{ "{:,.2f}".format(pago) }} <span class="currency">COP</span></div>
+        </div>
+
+        <div class="details-section">
+            <h3>Detalle de la Liquidación</h3>
+            <table class="data-table details-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Salario Mensual Base</strong></td>
+                        <td class="text-right">${{ "{:,.2f}".format(salario) }} COP</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Días de Incapacidad</strong></td>
+                        <td class="text-right">{{ dias | int if dias == dias | int else dias }} días</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tipo de Incapacidad</strong></td>
+                        <td class="text-right">
+                            <span class="badge badge-info">{{ tipo_nombre or tipo }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Porcentaje de Reconocimiento</strong></td>
+                        <td class="text-right">{{ "{:.2f}%".format(porcentaje * 100) }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Valor por Día (Salario / 30)</strong></td>
+                        <td class="text-right">${{ "{:,.2f}".format(salario / 30.0) }} COP</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {% if caso_guardado %}
+        <div class="alert alert-success">
+            <span class="alert-icon">💾</span>
+            <div class="alert-content">
+                <strong>Registro guardado en base de datos:</strong>
+                <p>El caso ha sido registrado exitosamente con el ID <strong>#{{ caso_guardado.id }}</strong> (Fecha: {{ caso_guardado.fecha }}).</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="result-actions">
+            <a href="/" class="btn btn-primary">Realizar otro cálculo</a>
+            <a href="/casos" class="btn btn-secondary">Ver historial de casos</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

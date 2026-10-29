@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Incapacidad{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Búsqueda de Casos de Incapacidad</h2>
+        <p class="subtitle">Consulte registros almacenados por ID de caso, tipo o fecha</p>
+    </div>
+
+    <form action="/buscar" method="GET" class="search-form">
+        <div class="search-input-group">
+            <input 
+                type="text" 
+                name="query" 
+                id="query" 
+                placeholder="Ejemplo: '1', 'enfermedad', 'maternidad', '2026'..." 
+                value="{{ query or '' }}"
+                required
+            />
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            {% if query %}
+            <a href="/buscar" class="btn btn-secondary">Limpiar</a>
+            {% endif %}
+        </div>
+        <small class="form-hint">Escriba cualquier término relacionado con el registro.</small>
+    </form>
+
+    {% if error %}
+    <div class="alert alert-error">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-content">
+            <p>{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if query is not none %}
+    <div class="search-results-section">
+        <h3>Resultados para: <em>"{{ query }}"</em></h3>
+        
+        {% if resultados %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Días</th>
+                        <th>Salario</th>
+                        <th>Pago</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in resultados %}
+                    <tr>
+                        <td><strong>#{{ c.id }}</strong></td>
+                        <td>{{ c.fecha }}</td>
+                        <td>
+                            <span class="badge {% if 'maternidad' in c.tipo_incapacidad %}badge-success{% elif 'riesgo' in c.tipo_incapacidad %}badge-warning{% else %}badge-info{% endif %}">
+                                {{ c.tipo_nombre }}
+                            </span>
+                        </td>
+                        <td>{{ c.dias }} días</td>
+                        <td>${{ "{:,.2f}".format(c.salario) }}</td>
+                        <td><strong class="text-accent">${{ "{:,.2f}".format(c.pago) }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">🔎</span>
+            <h3>No se encontraron coincidencias</h3>
+            <p>No se encontró ningún caso que coincida con el criterio de búsqueda <em>"{{ query }}"</em>.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

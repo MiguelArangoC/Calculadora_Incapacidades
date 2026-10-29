@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Calcular Incapacidad{% endblock %}
+
+{% block content %}
+<div class="card-grid">
+    <div class="card card-form">
+        <div class="card-header">
+            <h2>Liquidación de Incapacidad</h2>
+            <p class="subtitle">Ingrese los datos laborales para calcular el auxilio económico</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-content">
+                <strong>Error en los datos ingresados:</strong>
+                <p>{{ error }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <form action="/incapacidad/calcular" method="POST" class="form">
+            <div class="form-group">
+                <label for="salario">Salario Mensual (COP)</label>
+                <div class="input-prefix-wrapper">
+                    <span class="input-prefix">$</span>
+                    <input 
+                        type="number" 
+                        step="any" 
+                        id="salario" 
+                        name="salario" 
+                        placeholder="Ej: 2500000" 
+                        value="{{ salario if salario is defined and salario is not none else '' }}" 
+                        required
+                    />
+                </div>
+                <small class="form-hint">Monto mensual antes de deducciones (debe ser mayor a 0).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="dias">Días de Incapacidad</label>
+                <input 
+                    type="number" 
+                    id="dias" 
+                    name="dias" 
+                    min="1" 
+                    step="1"
+                    placeholder="Ej: 5" 
+                    value="{{ dias if dias is defined and dias is not none else '' }}" 
+                    required
+                />
+                <small class="form-hint">Número de días ordenados por el médico tratante (mínimo 1 día).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="tipo">Tipo de Incapacidad</label>
+                <select id="tipo" name="tipo">
+                    <option value="enfermedad_general" {% if tipo == 'enfermedad_general' or not tipo %}selected{% endif %}>
+                        Enfermedad General (Reconocimiento del 66.67%)
+                    </option>
+                    <option value="maternidad" {% if tipo == 'maternidad' %}selected{% endif %}>
+                        Licencia de Maternidad (Reconocimiento del 100%)
+                    </option>
+                    <option value="riesgo_laboral" {% if tipo == 'riesgo_laboral' %}selected{% endif %}>
+                        Riesgo Laboral / Accidente de Trabajo (Reconocimiento del 100%)
+                    </option>
+                </select>
+                <small class="form-hint">El porcentaje legal de liquidación depende del origen.</small>
+            </div>
+
+            <div class="form-group-checkbox">
+                <label class="checkbox-label" for="guardar">
+                    <input type="checkbox" id="guardar" name="guardar" value="1" checked />
+                    <span>Guardar este caso en el historial de la base de datos</span>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span>Calcular Incapacidad</span> &rarr;
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card card-info">
+        <div class="card-header">
+            <h3>Porcentajes Legales en Colombia</h3>
+            <p class="subtitle">Base de liquidación según el Código Sustantivo del Trabajo</p>
+        </div>
+
+        <table class="data-table reference-table">
+            <thead>
+                <tr>
+                    <th>Origen</th>
+                    <th>Porcentaje</th>
+                    <th>A cargo de</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Enfermedad General</strong></td>
+                    <td><span class="badge badge-info">66.67%</span></td>
+                    <td>Empleador (días 1-2) / EPS (día 3+)</td>
+                </tr>
+                <tr>
+                    <td><strong>Maternidad</strong></td>
+                    <td><span class="badge badge-success">100%</span></td>
+                    <td>EPS</td>
+                </tr>
+                <tr>
+                    <td><strong>Riesgo Laboral</strong></td>
+                    <td><span class="badge badge-warning">100%</span></td>
+                    <td>ARL</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="formula-box">
+            <h4>Fórmula de Cálculo:</h4>
+            <code>Valor Día = Salario Mensual / 30</code><br>
+            <code>Pago = Valor Día × Porcentaje × Días</code>
+        </div>
+    </div>
+</div>
+{% endblock %}

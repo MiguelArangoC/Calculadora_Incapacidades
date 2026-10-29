@@ -2,7 +2,7 @@
 
 Aplicación académica en Python para estimar el pago correspondiente a incapacidades laborales en Colombia.
 
-Cuenta con interfaz gráfica (Kivy/KivyMD), interfaz de consola, persistencia con SQLite y generación de ejecutables para Windows y Android.
+Cuenta con interfaz web (Flask), interfaz gráfica (Kivy/KivyMD), interfaz de consola, persistencia con PostgreSQL/SQLite y generación de ejecutables para Windows y Android.
 
 > **Nota:** Los resultados son una simulación académica y no sustituyen una liquidación oficial realizada por una entidad competente.
 
@@ -74,6 +74,7 @@ Los errores se manejan con excepciones específicas que generan mensajes claros 
 
 ```
 Calculadora_Incapacidades/
+├── app.py                           # Servidor Web Flask (ref: webserver-01)
 ├── main.py                          # Punto de entrada de la app gráfica
 ├── probar_conexion.py               # Prueba de conexión (ref: hellodb.py)
 ├── crear_tablas.py                  # DDL y carga inicial (ref: crear-usuarios.py)
@@ -83,6 +84,17 @@ Calculadora_Incapacidades/
 ├── buildozer.spec                   # Configuración Android
 ├── secret_config_sample.py          # Plantilla de conexión a la BD
 ├── secret_config.py                 # Tu conexión real (NO se sube a Git)
+│
+├── templates/                       # Plantillas HTML con motor Jinja2 (ref: webserver-01)
+│   ├── base.html                    # Plantilla base común
+│   ├── incapacidad.html             # Formulario de cálculo
+│   ├── resultado_incapacidad.html   # Resultados de liquidación
+│   ├── casos.html                   # Listado histórico tabulado
+│   └── buscar.html                  # Búsqueda de casos con tabla de resultados
+│
+├── static/                          # Archivos estáticos de la interfaz web
+│   └── css/
+│       └── style.css                # Estilos modernos y responsivos
 │
 ├── sql/                             # Scripts SQL (DDL y DML)
 │   ├── crear-tipos-incapacidad.sql  # DDL catálogo de tipos
@@ -112,7 +124,8 @@ Calculadora_Incapacidades/
 ├── test/
 │   ├── test_incapacidad.py          # Pruebas del cálculo de incapacidad
 │   ├── test_casos_bd.py             # Pruebas del Controller y ORM
-│   └── test_database_scripts.py     # Pruebas de scripts SQL, cursores y transacciones
+│   ├── test_database_scripts.py     # Pruebas de scripts SQL, cursores y transacciones
+│   └── test_web.py                  # Pruebas automatizadas de la interfaz web (Flask)
 │
 └── .github/workflows/
     └── build-windows.yml            # CI para generar el .exe
@@ -201,6 +214,17 @@ python consultar_casos.py
 
 ---
 
+## Tecnologías
+
+- **Lenguaje:** Python 3.12
+- **Servidor Web:** Flask 3.x, motor de plantillas Jinja2, HTML5 y CSS3 moderno (arquitectura [webserver-01](https://github.com/ProfeBill/webserver-01))
+- **Interfaz Gráfica:** Kivy 2.3, KivyMD 2.0
+- **Base de Datos y Persistencia:** PostgreSQL, SQLite local, SQLAlchemy 2.0 (ORM) y psycopg2
+- **Pruebas Automatizadas:** Pytest y Unittest (cobertura unitaria y de integración)
+- **Empaquetado y Compilación:** Buildozer (Android APK) y PyInstaller (ejecutable Windows)
+
+---
+
 ## Requisitos
 
 - Python 3.12 (Obligatorio), una versión mayor de Python no correrá la interfaz gráfica.
@@ -226,6 +250,28 @@ python -m pip install -r requirements.txt
 ---
 
 ## Ejecución
+
+### Interfaz web (Flask)
+
+Basada en el repositorio y conceptos de referencia [webserver-01](https://github.com/ProfeBill/webserver-01):
+
+```bash
+python app.py
+```
+
+O utilizando el comando de ejecución de Flask en modo Debug (con recarga automática):
+
+```bash
+python -m flask run --debug
+```
+
+Una vez en ejecución, acceda en su navegador web a: **[http://127.0.0.1:5000/](http://127.0.0.1:5000/)**
+
+**Rutas y funcionalidades web:**
+- **`/` (GET):** Formulario para ingresar salario mensual, días de incapacidad y seleccionar el tipo legal (`enfermedad_general`, `maternidad`, `riesgo_laboral`).
+- **`/incapacidad/calcular` (POST):** Procesa los datos enviados, ejecuta el cálculo en el modelo, valida errores (con código HTTP 400), opcionalmente guarda el caso en la base de datos y muestra la tarjeta de liquidación detallada.
+- **`/casos` (GET):** Consulta y presenta en una tabla con diseño moderno el historial completo de casos registrados en la base de datos (con sumatorias de días y pagos).
+- **`/buscar` (GET):** Permite filtrar y buscar registros por ID, fecha o tipo de incapacidad mediante el parámetro `query`.
 
 ### Interfaz gráfica (KivyMD)
 

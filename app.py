@@ -1,6 +1,5 @@
 """
 Aplicación Web de Calculadora de Incapacidades Laborales con Flask.
-Referencia y estructura basada en: https://github.com/ProfeBill/webserver-01
 
 Provee una interfaz web completa para:
 - Formulario de liquidación de incapacidades laborales (GET /).
