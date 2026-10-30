@@ -3,7 +3,7 @@ Pruebas automatizadas para la interfaz web (Flask) de la Calculadora de Incapaci
 """
 
 import unittest
-from src.view.web.app import app
+from src.view.web.app import create_app
 from src.controller.incapacidad_controller import IncapacidadController
 from test.test_casos_bd import crear_engine_en_memoria
 
@@ -13,15 +13,14 @@ class TestWebCalculadora(unittest.TestCase):
 
     def setUp(self):
         """Configura el cliente de prueba de Flask y base de datos de prueba en memoria."""
-        app.config['TESTING'] = True
-        self.client = app.test_client()
-
         # Inyectar engine en memoria en el controlador para aislar pruebas
         self.engine = crear_engine_en_memoria()
-        import src.view.web.app as app_module
-        app_module._controller = IncapacidadController(engine=self.engine)
-        app_module._controlador_inicializado = True
-        app_module._controller.crear_tablas()
+        self.controller = IncapacidadController(engine=self.engine)
+        self.controller.crear_tablas()
+
+        self.app = create_app(controller=self.controller)
+        self.app.config['TESTING'] = True
+        self.client = self.app.test_client()
 
     def tearDown(self):
         """Cierra el engine al finalizar."""
@@ -131,8 +130,7 @@ class TestWebCalculadora(unittest.TestCase):
     def test_ruta_buscar_con_query(self):
         """GET /buscar con query retorna los resultados correspondientes."""
         # Insertar un caso para buscar
-        from src.view.web.app import _controller
-        _controller.insertar_caso(salario=2500000, dias=4, tipo_incapacidad="maternidad")
+        self.controller.insertar_caso(salario=2500000, dias=4, tipo_incapacidad="maternidad")
 
         respuesta = self.client.get('/buscar?query=maternidad')
         self.assertEqual(respuesta.status_code, 200)

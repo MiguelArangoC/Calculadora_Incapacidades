@@ -14,8 +14,8 @@ import os
 
 from flask import Flask
 
-from src.controller.blueprints import casos_bp, incapacidad_bp
 from src.controller.incapacidad_controller import IncapacidadController
+from src.controller.urls import registrar_urls
 
 
 # Raíz del proyecto (tres niveles arriba de src/view/web/)
@@ -50,9 +50,8 @@ def create_app(controller: IncapacidadController | None = None) -> Flask:
 
     flask_app.config["CONTROLLER"] = controller
 
-    # Registro de los blueprints (rutas definidas en el Controller)
-    flask_app.register_blueprint(incapacidad_bp)
-    flask_app.register_blueprint(casos_bp)
+    # Registro de URLs / Blueprints a través del módulo de rutas del Controller
+    registrar_urls(flask_app)
 
     return flask_app
 
