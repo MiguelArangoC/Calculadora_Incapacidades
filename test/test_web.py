@@ -3,7 +3,7 @@ Pruebas automatizadas para la interfaz web (Flask) de la Calculadora de Incapaci
 """
 
 import unittest
-from app import app
+from src.view.web.app import app
 from src.controller.incapacidad_controller import IncapacidadController
 from test.test_casos_bd import crear_engine_en_memoria
 
@@ -18,7 +18,7 @@ class TestWebCalculadora(unittest.TestCase):
 
         # Inyectar engine en memoria en el controlador para aislar pruebas
         self.engine = crear_engine_en_memoria()
-        import app as app_module
+        import src.view.web.app as app_module
         app_module._controller = IncapacidadController(engine=self.engine)
         app_module._controlador_inicializado = True
         app_module._controller.crear_tablas()
@@ -131,7 +131,7 @@ class TestWebCalculadora(unittest.TestCase):
     def test_ruta_buscar_con_query(self):
         """GET /buscar con query retorna los resultados correspondientes."""
         # Insertar un caso para buscar
-        from app import _controller
+        from src.view.web.app import _controller
         _controller.insertar_caso(salario=2500000, dias=4, tipo_incapacidad="maternidad")
 
         respuesta = self.client.get('/buscar?query=maternidad')

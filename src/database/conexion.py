@@ -24,8 +24,6 @@ from typing import Any
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.engine import URL
 
-from src.model.incapacidad import IncapacidadError
-
 
 DIRECTORIO_PROYECTO = Path(__file__).resolve().parents[2]
 DIRECTORIO_SQL = DIRECTORIO_PROYECTO / "sql"
@@ -34,11 +32,11 @@ RUTA_SQLITE_POR_DEFECTO = DIRECTORIO_PROYECTO / "incapacidades.db"
 CAMPOS_OBLIGATORIOS = ("DB_DRIVER", "DB_NAME")
 
 
-class ConfiguracionBDInvalida(IncapacidadError):
+class ConfiguracionBDInvalida(Exception):
     """Indica que secret_config.py está incompleto o es inválido."""
 
 
-class ErrorConexionBD(IncapacidadError):
+class ErrorConexionBD(Exception):
     """Indica que no fue posible establecer conexión con el servidor de base de datos."""
 
 

@@ -12,15 +12,16 @@ Todas las fallas de la base de datos se reportan como
 SQLAlchemy.
 """
 
-from sqlalchemy import Engine, String, cast, select
+from sqlalchemy import Engine, String, cast, create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from src.database.conexion import obtener_engine
+from src.database.conexion import RUTA_SQLITE_POR_DEFECTO, obtener_engine
 from src.model.incapacidad import (
     TIPOS_INCAPACIDAD,
     IncapacidadError,
     calcular_pago_incapacidad,
+    obtener_porcentaje_reconocimiento,
 )
 from src.model.orm import Base, CasoIncapacidad, TipoIncapacidad
 
@@ -229,6 +230,65 @@ class IncapacidadController:
             raise CasoNoEncontrado(id_caso)
 
         return casos[0]
+
+    def inicializar_con_fallback(self) -> None:
+        """
+        Verifica la conexión a la base de datos y aplica fallback a SQLite
+        local si no está disponible. Crea las tablas si no existen.
+
+        Esta lógica vive en el Controller (no en la Vista) para respetar
+        la regla MVC: solo el Controller se comunica con la base de datos.
+        """
+        try:
+            with self.engine.connect():
+                pass
+            self.crear_tablas()
+        except Exception:
+            # Fallback transparente a SQLite local
+            engine_sqlite = create_engine(
+                f"sqlite:///{RUTA_SQLITE_POR_DEFECTO}"
+            )
+            self._engine = engine_sqlite
+            self.crear_tablas()
+
+    def calcular_caso(
+        self,
+        salario: float,
+        dias: float,
+        tipo_incapacidad: str = "enfermedad_general",
+    ) -> dict:
+        """
+        Calcula el pago de una incapacidad sin guardarla en la base de datos.
+
+        Retorna un diccionario con el resultado del cálculo incluyendo
+        el porcentaje de reconocimiento, para que la Vista no necesite
+        consultar directamente al Modelo.
+
+        Args:
+            salario: Salario mensual del empleado.
+            dias: Días de incapacidad.
+            tipo_incapacidad: Tipo registrado de incapacidad.
+
+        Returns:
+            Diccionario con: salario, dias, tipo_incapacidad, porcentaje, pago.
+
+        Raises:
+            IncapacidadError: Si los datos de entrada no son válidos.
+        """
+        pago = calcular_pago_incapacidad(
+            salario_mensual=salario,
+            dias_incapacidad=dias,
+            tipo_incapacidad=tipo_incapacidad,
+        )
+        porcentaje = obtener_porcentaje_reconocimiento(tipo_incapacidad)
+
+        return {
+            "salario": salario,
+            "dias": dias,
+            "tipo_incapacidad": tipo_incapacidad,
+            "porcentaje": porcentaje,
+            "pago": pago,
+        }
 
     def _consultar(self, consulta) -> list[dict]:
         """Ejecuta un SELECT de casos ordenado por ID descendente."""
