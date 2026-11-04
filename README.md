@@ -74,7 +74,7 @@ Los errores se manejan con excepciones específicas que generan mensajes claros 
 
 ```
 Calculadora_Incapacidades/
-├── app.py                           # Servidor Web Flask (ref: webserver-01)
+├── app.py                           # Punto de entrada WSGI para producción (Render / Gunicorn)
 ├── main.py                          # Punto de entrada de la app gráfica
 ├── probar_conexion.py               # Prueba de conexión (ref: hellodb.py)
 ├── crear_tablas.py                  # DDL y carga inicial (ref: crear-usuarios.py)
@@ -106,7 +106,9 @@ Calculadora_Incapacidades/
 │
 ├── src/
 │   ├── controller/
-│   │   └── incapacidad_controller.py  # Operaciones de negocio y consultas ORM
+│   │   ├── blueprints.py            # Rutas y controladores de endpoints web (Flask Blueprints)
+│   │   ├── incapacidad_controller.py# Operaciones de negocio y consultas ORM
+│   │   └── urls.py                  # Registro centralizado de URLs y Blueprints
 │   │
 │   ├── database/
 │   │   └── conexion.py              # Gestión de conexiones (psycopg2 / SQLAlchemy)
@@ -118,8 +120,10 @@ Calculadora_Incapacidades/
 │   └── view/
 │       ├── console/
 │       │   └── cli.py               # Interfaz de consola
-│       └── gui/
-│           └── app.py               # Interfaz gráfica (Kivy/KivyMD)
+│       ├── gui/
+│       │   └── app.py               # Interfaz gráfica (Kivy/KivyMD)
+│       └── web/
+│           └── app.py               # Fábrica de la aplicación Flask (Application Factory)
 │
 ├── test/
 │   ├── test_incapacidad.py          # Pruebas del cálculo de incapacidad
@@ -217,7 +221,7 @@ python consultar_casos.py
 ## Tecnologías
 
 - **Lenguaje:** Python 3.12
-- **Servidor Web:** Flask 3.x, motor de plantillas Jinja2, HTML5 y CSS3 moderno (arquitectura [webserver-01](https://github.com/ProfeBill/webserver-01))
+- **Servidor Web:** Flask 3.x, Gunicorn, motor de plantillas Jinja2, HTML5 y CSS3 moderno (arquitectura [webserver-01](https://github.com/ProfeBill/webserver-01) y patrón MVC modular)
 - **Interfaz Gráfica:** Kivy 2.3, KivyMD 2.0
 - **Base de Datos y Persistencia:** PostgreSQL, SQLite local, SQLAlchemy 2.0 (ORM) y psycopg2
 - **Pruebas Automatizadas:** Pytest y Unittest (cobertura unitaria y de integración)
@@ -253,7 +257,7 @@ python -m pip install -r requirements.txt
 
 ### Interfaz web (Flask)
 
-Basada en el repositorio y conceptos de referencia [webserver-01](https://github.com/ProfeBill/webserver-01):
+Basada en el repositorio y conceptos de referencia [webserver-01](https://github.com/ProfeBill/webserver-01) y estructurada bajo arquitectura MVC modular:
 
 ```bash
 python app.py
@@ -263,6 +267,12 @@ O utilizando el comando de ejecución de Flask en modo Debug (con recarga autom�
 
 ```bash
 python -m flask run --debug
+```
+
+O con servidor WSGI Gunicorn para producción (Linux / Render):
+
+```bash
+gunicorn app:app
 ```
 
 Una vez en ejecución, acceda en su navegador web a: **[http://127.0.0.1:5000/](http://127.0.0.1:5000/)**
