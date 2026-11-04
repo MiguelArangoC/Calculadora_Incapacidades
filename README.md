@@ -126,10 +126,7 @@ Calculadora_Incapacidades/
 │           └── app.py               # Fábrica de la aplicación Flask (Application Factory)
 │
 ├── test/
-│   ├── test_incapacidad.py          # Pruebas del cálculo de incapacidad
-│   ├── test_casos_bd.py             # Pruebas del Controller y ORM
-│   ├── test_database_scripts.py     # Pruebas de scripts SQL, cursores y transacciones
-│   └── test_web.py                  # Pruebas automatizadas de la interfaz web (Flask)
+│   └── test_incapacidad.py          # Pruebas del cálculo y validaciones de incapacidad
 │
 └── .github/workflows/
     └── build-windows.yml            # CI para generar el .exe
@@ -326,10 +323,10 @@ O con `unittest`:
 python -m unittest discover -s test -v
 ```
 
-Las pruebas de base de datos (`test/test_casos_bd.py`) usan SQLite en memoria:
-no necesitan servidor ni `secret_config.py`. El fixture `BaseDatosTestCase`
-crea las tablas en `setUp` y las borra en `tearDown`. Cubren crear y borrar
-tablas, insertar y buscar, cada uno con casos normales y de error.
+Las pruebas automatizadas (`test/test_incapacidad.py`) validan la lógica
+de negocio del modelo: cálculo de liquidaciones, aplicación de porcentajes
+según tipo de incapacidad, redondeos, límites y manejo de excepciones ante
+datos inválidos o incompletos.
 
 ---
 
