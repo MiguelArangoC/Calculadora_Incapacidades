@@ -257,6 +257,8 @@ python -m pip install -r requirements.txt
 
 ### Interfaz web (Flask)
 
+Link web: https://calculadora-incapacidades.onrender.com/
+
 Basada en el repositorio y conceptos de referencia [webserver-01](https://github.com/ProfeBill/webserver-01) y estructurada bajo arquitectura MVC modular:
 
 ```bash
@@ -278,6 +280,7 @@ gunicorn app:app
 Una vez en ejecución, acceda en su navegador web a: **[http://127.0.0.1:5000/](http://127.0.0.1:5000/)**
 
 **Rutas y funcionalidades web:**
+
 - **`/` (GET):** Formulario para ingresar salario mensual, días de incapacidad y seleccionar el tipo legal (`enfermedad_general`, `maternidad`, `riesgo_laboral`).
 - **`/incapacidad/calcular` (POST):** Procesa los datos enviados, ejecuta el cálculo en el modelo, valida errores (con código HTTP 400), opcionalmente guarda el caso en la base de datos y muestra la tarjeta de liquidación detallada.
 - **`/casos` (GET):** Consulta y presenta en una tabla con diseño moderno el historial completo de casos registrados en la base de datos (con sumatorias de días y pagos).
