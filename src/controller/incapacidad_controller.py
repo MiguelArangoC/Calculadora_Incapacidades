@@ -25,7 +25,6 @@ from src.model.incapacidad import (
 )
 from src.model.orm import Base, CasoIncapacidad, TipoIncapacidad
 
-
 class BaseDeDatosError(IncapacidadError):
     """Indica que una operación con la base de datos falló."""
 

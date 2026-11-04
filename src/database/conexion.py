@@ -27,7 +27,7 @@ from sqlalchemy.engine import URL
 
 DIRECTORIO_PROYECTO = Path(__file__).resolve().parents[2]
 DIRECTORIO_SQL = DIRECTORIO_PROYECTO / "sql"
-RUTA_SQLITE_POR_DEFECTO = DIRECTORIO_PROYECTO / "incapacidades.db"
+RUTA_SQLITE_POR_DEFECTO = DIRECTORIO_PROYECTO / "src" / "data" / "incapacidades.db"
 
 CAMPOS_OBLIGATORIOS = ("DB_DRIVER", "DB_NAME")
 
