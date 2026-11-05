@@ -1,6 +1,6 @@
 # Scripts SQL - Calculadora de Incapacidades
 
-Directorio de scripts SQL para la base de datos PostgreSQL (con compatibilidad SQLite), estructurado tomando como referencia las buenas prácticas de diseño relacional y el repositorio educativo de referencia.
+Directorio de scripts SQL para la base de datos PostgreSQL, estructurado tomando como referencia las buenas prácticas de diseño relacional y el repositorio educativo de referencia.
 
 ## Estructura de archivos
 

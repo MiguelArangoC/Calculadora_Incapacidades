@@ -2,7 +2,7 @@
 
 Aplicación académica en Python para estimar el pago correspondiente a incapacidades laborales en Colombia.
 
-Cuenta con interfaz web (Flask), interfaz gráfica (Kivy/KivyMD), interfaz de consola, persistencia con PostgreSQL/SQLite y generación de ejecutables para Windows y Android.
+Cuenta con interfaz web (Flask), interfaz gráfica (Kivy/KivyMD), interfaz de consola, persistencia con PostgreSQL (mediante Psycopg2) y generación de ejecutables para Windows y Android.
 
 > **Nota:** Los resultados son una simulación académica y no sustituyen una liquidación oficial realizada por una entidad competente.
 
@@ -14,7 +14,7 @@ Cuenta con interfaz web (Flask), interfaz gráfica (Kivy/KivyMD), interfaz de co
 - [Proceso de cálculo](#proceso-de-cálculo)
 - [Validaciones](#validaciones)
 - [Estructura del proyecto](#estructura-del-proyecto)
-- [Base de datos (ORM)](#base-de-datos-orm)
+- [Base de datos](#base-de-datos)
 - [Tecnologías](#tecnologías)
 - [Requisitos](#requisitos)
 - [Instalación](#instalación)
@@ -107,15 +107,14 @@ Calculadora_Incapacidades/
 ├── src/
 │   ├── controller/
 │   │   ├── blueprints.py            # Rutas y controladores de endpoints web (Flask Blueprints)
-│   │   ├── incapacidad_controller.py# Operaciones de negocio y consultas ORM
+│   │   ├── incapacidad_controller.py# Operaciones de negocio y consultas SQL (psycopg2)
 │   │   └── urls.py                  # Registro centralizado de URLs y Blueprints
 │   │
 │   ├── database/
-│   │   └── conexion.py              # Gestión de conexiones (psycopg2 / SQLAlchemy)
+│   │   └── conexion.py              # Gestión de conexiones (psycopg2 / PostgreSQL)
 │   │
 │   ├── model/
-│   │   ├── incapacidad.py           # Lógica de negocio (fórmulas y validaciones)
-│   │   └── orm.py                   # Modelos relacionales ORM
+│   │   └── incapacidad.py           # Lógica de negocio (fórmulas y validaciones)
 │   │
 │   └── view/
 │       ├── console/
@@ -134,9 +133,9 @@ Calculadora_Incapacidades/
 
 ---
 
-## Base de datos (ORM)
+## Base de datos
 
-La capa de base de datos sigue el modelo arquitectónico y las buenas prácticas del repositorio de referencia [database-01](https://github.com/ProfeBill/database-01), adaptándolo al dominio de cálculo y registro de incapacidades laborales en Colombia.
+La capa de base de datos sigue el modelo arquitectónico y las buenas prácticas del repositorio de referencia [database-01](https://github.com/ProfeBill/database-01), adaptándolo al dominio de cálculo y registro de incapacidades laborales en Colombia con PostgreSQL y Psycopg2.
 
 ### Tablas del sistema
 
@@ -147,7 +146,7 @@ La capa de base de datos sigue el modelo arquitectónico y las buenas prácticas
 
 ### Scripts SQL (`sql/`)
 
-Se encuentran organizados en la carpeta `sql/` con sintaxis estándar PostgreSQL y compatibilidad SQLite:
+Se encuentran organizados en la carpeta `sql/` con sintaxis estándar PostgreSQL:
 
 - `crear-tipos-incapacidad.sql`: Crea la tabla `tipos_incapacidad`.
 - `datos-tipos-incapacidad.sql`: Inserta los valores por defecto del catálogo.
@@ -168,7 +167,7 @@ Se encuentran organizados en la carpeta `sql/` con sintaxis estándar PostgreSQL
 
 ### 1. Creación y configuración de la base de datos
 
-#### A. Crear la base de datos en el servidor (PostgreSQL / MySQL)
+#### A. Crear la base de datos en el servidor PostgreSQL
 
 Si utilizas un servidor PostgreSQL (local, Docker o en la nube como Render o Neon), crea la base de datos antes de ejecutar los scripts de creación de tablas:
 
@@ -179,8 +178,6 @@ psql -U postgres -c "CREATE DATABASE incapacidades;"
 # O con la utilidad createdb de PostgreSQL:
 createdb -U postgres incapacidades
 ```
-
-> **Nota para SQLite:** Si no deseas configurar un servidor PostgreSQL, no requieres crear ninguna base de datos previa. Si omites `secret_config.py` o configuras `DB_DRIVER = "sqlite"`, el sistema creará y usará automáticamente un archivo local `incapacidades.db`.
 
 #### B. Configurar credenciales de conexión (`secret_config.py`)
 
@@ -194,12 +191,12 @@ copy secret_config_sample.py secret_config.py     # Windows
 Configura los datos de tu base de datos:
 
 ```python
-DB_DRIVER = "postgresql+psycopg2"
 DB_USER = "tu_usuario"
 DB_PASSWORD = "tu_password"
 DB_HOST = "localhost"  # O tu host en Render / Neon
 DB_PORT = 5432
 DB_NAME = "incapacidades"
+```
 ```
 
 ### 2. Crear las tablas y probar la conexión
@@ -220,7 +217,7 @@ python consultar_casos.py
 - **Lenguaje:** Python 3.12
 - **Servidor Web:** Flask 3.x, Gunicorn, motor de plantillas Jinja2, HTML5 y CSS3 moderno (arquitectura [webserver-01](https://github.com/ProfeBill/webserver-01) y patrón MVC modular)
 - **Interfaz Gráfica:** Kivy 2.3, KivyMD 2.0
-- **Base de Datos y Persistencia:** PostgreSQL, SQLite local, SQLAlchemy 2.0 (ORM) y psycopg2
+- **Base de Datos y Persistencia:** PostgreSQL y Psycopg2
 - **Pruebas Automatizadas:** Pytest y Unittest (cobertura unitaria y de integración)
 - **Empaquetado y Compilación:** Buildozer (Android APK) y PyInstaller (ejecutable Windows)
 

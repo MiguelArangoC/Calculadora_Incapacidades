@@ -1,35 +1,32 @@
 """
-Conexión con la base de datos.
+Conexión con la base de datos PostgreSQL mediante Psycopg2.
 
-Lee la configuración desde ``secret_config.py`` (ver
-``secret_config_sample.py``). Si ese archivo no existe, usa un archivo
-SQLite local (``incapacidades.db``) para que el programa siga
-funcionando sin configuración.
+Lee la configuración desde ``secret_config.py`` o desde la variable
+de entorno ``DATABASE_URL``.
 
 Ofrece:
-- ``obtener_conexion()``: Conexión nativa DB-API (psycopg2 o sqlite3)
-  para trabajar directamente con cursores, transacciones (commit/rollback)
-  y scripts SQL.
-- ``obtener_engine()``: Engine SQLAlchemy compartido para el ORM.
-- ``ejecutar_script_sql()``: Ejecutor de archivos .sql.
+- ``obtener_conexion()``: Retorna una conexión directa (psycopg2) para
+  ejecutar sentencias SQL mediante cursores y gestionar transacciones
+  (commit/rollback).
+- ``ejecutar_script_sql()``: Ejecuta un archivo .sql en PostgreSQL.
 - ``descripcion_conexion()``: Resumen seguro de la conexión activa.
 """
 
-from functools import lru_cache
 from pathlib import Path
-import sqlite3
 from types import ModuleType
 from typing import Any
+import os
 
-from sqlalchemy import Engine, create_engine
-from sqlalchemy.engine import URL
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None
 
 
 DIRECTORIO_PROYECTO = Path(__file__).resolve().parents[2]
 DIRECTORIO_SQL = DIRECTORIO_PROYECTO / "sql"
-RUTA_SQLITE_POR_DEFECTO = DIRECTORIO_PROYECTO / "src" / "data" / "incapacidades.db"
 
-CAMPOS_OBLIGATORIOS = ("DB_DRIVER", "DB_NAME")
+CAMPOS_OBLIGATORIOS = ("DB_NAME",)
 
 
 class ConfiguracionBDInvalida(Exception):
@@ -37,38 +34,76 @@ class ConfiguracionBDInvalida(Exception):
 
 
 class ErrorConexionBD(Exception):
-    """Indica que no fue posible establecer conexión con el servidor de base de datos."""
+    """Indica que no fue posible establecer conexión con el servidor PostgreSQL."""
 
 
 def _cargar_configuracion() -> ModuleType | None:
     """Importa secret_config.py; retorna None si no existe."""
     try:
         import secret_config
+        return secret_config
     except ModuleNotFoundError as error:
         if error.name == "secret_config":
             return None
         raise
 
-    return secret_config
 
-
-def construir_url(configuracion: ModuleType | None = None) -> URL:
-    """
-    Construye la URL de conexión de SQLAlchemy.
-
-    Args:
-        configuracion: Módulo con las variables DB_*. Si es None se
-            intenta importar ``secret_config``.
-
-    Raises:
-        ConfiguracionBDInvalida: Si falta un campo obligatorio.
-    """
+def descripcion_conexion(configuracion: ModuleType | None = None) -> str:
+    """Describe la conexión activa a PostgreSQL sin mostrar la contraseña."""
     if configuracion is None:
         configuracion = _cargar_configuracion()
 
     if configuracion is None:
-        return URL.create(
-            "sqlite", database=str(RUTA_SQLITE_POR_DEFECTO)
+        url_env = os.environ.get("DATABASE_URL")
+        if url_env:
+            return url_env.split("@")[-1] if "@" in url_env else "PostgreSQL (DATABASE_URL)"
+        return "PostgreSQL (sin configuración activa: secret_config.py no encontrado)"
+
+    usuario = getattr(configuracion, "DB_USER", "postgres") or "postgres"
+    host = getattr(configuracion, "DB_HOST", "localhost") or "localhost"
+    puerto = getattr(configuracion, "DB_PORT", 5432) or 5432
+    nombre_bd = getattr(configuracion, "DB_NAME", "")
+
+    return f"postgresql://{usuario}:***@{host}:{puerto}/{nombre_bd}"
+
+
+def obtener_conexion(configuracion: ModuleType | None = None) -> Any:
+    """
+    Retorna una conexión directa DB-API (psycopg2) a la base de datos PostgreSQL.
+
+    Args:
+        configuracion: Módulo con credenciales. Si es None, carga secret_config.py
+            o la variable de entorno DATABASE_URL.
+
+    Returns:
+        Conexión directa de psycopg2.
+
+    Raises:
+        ErrorConexionBD: Si no se puede establecer la conexión o falta psycopg2.
+        ConfiguracionBDInvalida: Si falta algún campo obligatorio.
+    """
+    if psycopg2 is None:
+        raise ErrorConexionBD(
+            "El driver 'psycopg2' no está instalado. "
+            "Ejecute: pip install psycopg2-binary"
+        )
+
+    if configuracion is None:
+        configuracion = _cargar_configuracion()
+
+    if configuracion is None:
+        url_env = os.environ.get("DATABASE_URL")
+        if url_env:
+            try:
+                return psycopg2.connect(url_env, connect_timeout=5)
+            except Exception as error:
+                raise ErrorConexionBD(
+                    f"No se pudo conectar al servidor PostgreSQL mediante DATABASE_URL. Detalle: {error}"
+                ) from error
+
+        raise ErrorConexionBD(
+            "No se encontró 'secret_config.py' ni la variable de entorno 'DATABASE_URL'. "
+            "Configure las credenciales de PostgreSQL en 'secret_config.py' a partir de 'secret_config_sample.py'."
         )
 
     faltantes = [
@@ -76,109 +111,36 @@ def construir_url(configuracion: ModuleType | None = None) -> URL:
         for campo in CAMPOS_OBLIGATORIOS
         if not getattr(configuracion, campo, None)
     ]
-
     if faltantes:
         raise ConfiguracionBDInvalida(
-            "Error: secret_config.py no define: "
-            f"{', '.join(faltantes)}. Revise secret_config_sample.py."
+            f"Error: secret_config.py no define: {', '.join(faltantes)}. Revise secret_config_sample.py."
         )
 
-    if configuracion.DB_DRIVER.startswith("sqlite"):
-        # SQLite es un archivo local: ignora usuario, host y puerto.
-        database_path = configuracion.DB_NAME
-        if not Path(database_path).is_absolute():
-            database_path = str(DIRECTORIO_PROYECTO / database_path)
-        return URL.create(
-            configuracion.DB_DRIVER, database=database_path
+    host = getattr(configuracion, "DB_HOST", "localhost")
+    puerto = getattr(configuracion, "DB_PORT", 5432)
+    nombre_bd = configuracion.DB_NAME
+    usuario = getattr(configuracion, "DB_USER", None)
+    clave = getattr(configuracion, "DB_PASSWORD", None)
+
+    try:
+        return psycopg2.connect(
+            database=nombre_bd,
+            user=usuario,
+            password=clave,
+            host=host,
+            port=puerto,
+            connect_timeout=5,
         )
-
-    return URL.create(
-        drivername=configuracion.DB_DRIVER,
-        username=getattr(configuracion, "DB_USER", None),
-        password=getattr(configuracion, "DB_PASSWORD", None),
-        host=getattr(configuracion, "DB_HOST", None),
-        port=getattr(configuracion, "DB_PORT", None),
-        database=configuracion.DB_NAME,
-    )
-
-
-@lru_cache(maxsize=1)
-def obtener_engine() -> Engine:
-    """Retorna el engine compartido de la aplicación."""
-    return create_engine(construir_url())
-
-
-def descripcion_conexion(configuracion: ModuleType | None = None) -> str:
-    """Describe la conexión activa sin mostrar la contraseña."""
-    return construir_url(configuracion).render_as_string(hide_password=True)
-
-
-def obtener_conexion(
-    configuracion: ModuleType | None = None,
-    usar_sqlite_fallback: bool = False,
-) -> Any:
-    """
-    Retorna una conexión directa (DB-API) a la base de datos.
-
-    Permite interactuar directamente mediante cursores (``cursor = conn.cursor()``),
-    ejecutar sentencias SQL, y gestionar transacciones con ``conn.commit()`` y
-    ``conn.rollback()``, tal como se enseña en psycopg2 / PostgreSQL.
-
-    Args:
-        configuracion: Módulo con credenciales. Si es None, carga secret_config.py.
-        usar_sqlite_fallback: Si es True o no hay secret_config, usa SQLite local.
-
-    Returns:
-        Conexión directa (psycopg2.connection o sqlite3.Connection).
-    """
-    if usar_sqlite_fallback:
-        return sqlite3.connect(str(RUTA_SQLITE_POR_DEFECTO))
-
-    if configuracion is None:
-        configuracion = _cargar_configuracion()
-
-    if configuracion is None or configuracion.DB_DRIVER.startswith("sqlite"):
-        ruta_db = RUTA_SQLITE_POR_DEFECTO
-        if configuracion and getattr(configuracion, "DB_NAME", None):
-            ruta_db = Path(configuracion.DB_NAME)
-            if not ruta_db.is_absolute():
-                ruta_db = DIRECTORIO_PROYECTO / ruta_db
-        return sqlite3.connect(str(ruta_db))
-
-    if configuracion.DB_DRIVER.startswith("postgresql"):
-        try:
-            import psycopg2
-        except ImportError as exc:
-            raise ErrorConexionBD(
-                "El driver 'psycopg2' no está instalado. "
-                "Ejecute: pip install psycopg2-binary"
-            ) from exc
-
-        try:
-            return psycopg2.connect(
-                database=configuracion.DB_NAME,
-                user=getattr(configuracion, "DB_USER", None),
-                password=getattr(configuracion, "DB_PASSWORD", None),
-                host=getattr(configuracion, "DB_HOST", "localhost"),
-                port=getattr(configuracion, "DB_PORT", 5432),
-                connect_timeout=5,
-            )
-        except UnicodeDecodeError:
-            raise ErrorConexionBD(
-                f"No se pudo conectar al servidor PostgreSQL en host='{getattr(configuracion, 'DB_HOST', 'localhost')}', "
-                f"puerto={getattr(configuracion, 'DB_PORT', 5432)}: "
-                "Conexión rechazada o servidor inalcanzable. "
-                "Verifique que el servicio esté iniciado y que el host y puerto en 'secret_config.py' sean correctos."
-            )
-        except Exception as error:
-            raise ErrorConexionBD(
-                f"No se pudo conectar al servidor PostgreSQL en "
-                f"host='{getattr(configuracion, 'DB_HOST', 'localhost')}', "
-                f"base='{configuracion.DB_NAME}'. Detalle: {error}"
-            ) from error
-
-    # Si es otro motor no soportado directamente por DBAPI aquí, recurre a SQLite
-    return sqlite3.connect(str(RUTA_SQLITE_POR_DEFECTO))
+    except UnicodeDecodeError:
+        raise ErrorConexionBD(
+            f"No se pudo conectar al servidor PostgreSQL en host='{host}', puerto={puerto}: "
+            "Conexión rechazada o servidor inalcanzable. "
+            "Verifique que el servicio esté iniciado y que las credenciales en 'secret_config.py' sean correctas."
+        )
+    except Exception as error:
+        raise ErrorConexionBD(
+            f"No se pudo conectar al servidor PostgreSQL en host='{host}', base='{nombre_bd}'. Detalle: {error}"
+        ) from error
 
 
 def ejecutar_script_sql(
@@ -186,14 +148,11 @@ def ejecutar_script_sql(
     conexion: Any | None = None,
 ) -> None:
     """
-    Lee y ejecuta un archivo .sql en la base de datos indicada o en la activa.
-
-    Si la conexión es SQLite, adapta la sintaxis de autoincremento para máxima
-    portabilidad. Maneja la transacción realizando commit() al finalizar.
+    Lee y ejecuta un archivo .sql en la base de datos PostgreSQL.
 
     Args:
         ruta_archivo: Ruta al archivo .sql.
-        conexion: Conexión DB-API opcional. Si es None, abre una nueva conexión.
+        conexion: Conexión psycopg2 opcional. Si es None, abre una nueva conexión.
     """
     ruta = Path(ruta_archivo)
     if not ruta.is_absolute():
@@ -210,16 +169,8 @@ def ejecutar_script_sql(
         cerrar_al_terminar = True
 
     try:
-        es_sqlite = isinstance(conexion, sqlite3.Connection)
-        if es_sqlite:
-            # Adaptación para SQLite si el script usa sintaxis PostgreSQL
-            sql_adaptado = contenido_sql.replace(
-                "SERIAL PRIMARY KEY", "INTEGER PRIMARY KEY AUTOINCREMENT"
-            )
-            conexion.executescript(sql_adaptado)
-        else:
-            with conexion.cursor() as cursor:
-                cursor.execute(contenido_sql)
+        with conexion.cursor() as cursor:
+            cursor.execute(contenido_sql)
         conexion.commit()
     except Exception:
         conexion.rollback()

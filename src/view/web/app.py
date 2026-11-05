@@ -30,7 +30,7 @@ def create_app(controller: IncapacidadController | None = None) -> Flask:
 
     Args:
         controller: Instancia de IncapacidadController a usar. Si es None,
-            se crea una nueva con fallback automático a SQLite local.
+            se crea una nueva conectada a PostgreSQL.
             Pasa un controller propio en las pruebas para aislarlas.
 
     Returns:
@@ -46,7 +46,7 @@ def create_app(controller: IncapacidadController | None = None) -> Flask:
     # blueprints lo obtengan con current_app.config['CONTROLLER'].
     if controller is None:
         controller = IncapacidadController()
-        controller.inicializar_con_fallback()
+        controller.inicializar_bd()
 
     flask_app.config["CONTROLLER"] = controller
 

@@ -1,17 +1,16 @@
 """
-Script para insertar un caso de incapacidad en la base de datos.
+Script para insertar un caso de incapacidad en la base de datos PostgreSQL.
 Referencia: insertar-usuario.py (https://github.com/ProfeBill/database-01)
 
 Este script demuestra:
 1. Cómo calcular el valor a pagar usando la lógica de negocio del modelo.
-2. Cómo insertar un registro (DML - INSERT INTO) usando un cursor y parámetros seguros.
+2. Cómo insertar un registro (DML - INSERT INTO) usando un cursor y parámetros seguros (%s).
 3. El uso de connection.commit() para confirmar la transacción.
 4. Cómo verificar la persistencia del registro mediante una consulta SELECT inmediata.
 5. El manejo de excepciones con connection.rollback() en caso de fallo.
 """
 
 import sys
-import sqlite3
 from datetime import datetime
 
 from src.database.conexion import (
@@ -48,15 +47,13 @@ def main() -> None:
 
     conexion = None
     try:
-        # 1. Conectar a la base de datos
+        # 1. Conectar a la base de datos PostgreSQL
         conexion = obtener_conexion()
         cursor = conexion.cursor()
 
         # 2. Obtener el ID del tipo de incapacidad en el catálogo
         cursor.execute(
-            "SELECT id, nombre FROM tipos_incapacidad WHERE clave = %s"
-            if not isinstance(conexion, sqlite3.Connection)
-            else "SELECT id, nombre FROM tipos_incapacidad WHERE clave = ?",
+            "SELECT id, nombre FROM tipos_incapacidad WHERE clave = %s;",
             (clave_tipo,),
         )
         tipo_fila = cursor.fetchone()
@@ -67,38 +64,30 @@ def main() -> None:
             )
         tipo_id, tipo_nombre = tipo_fila[0], tipo_fila[1]
 
-        # 3. Insertar el caso (DML)
-        # Usamos parámetros seguros (%s o ?) para evitar inyección SQL
+        # 3. Insertar el caso (DML) con parámetros seguros (%s) y RETURNING id
         fecha_actual = datetime.now()
-        param_placeholder = "%s" if not isinstance(conexion, sqlite3.Connection) else "?"
-
-        consulta_insert = f"""
+        consulta_insert = """
         INSERT INTO casos_incapacidad (fecha, tipo_id, salario, dias, pago)
-        VALUES ({param_placeholder}, {param_placeholder}, {param_placeholder}, {param_placeholder}, {param_placeholder})
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING id;
         """
-
         cursor.execute(
             consulta_insert,
             (fecha_actual, tipo_id, salario_mensual, dias_incapacidad, pago_calculado),
         )
+        nuevo_id = cursor.fetchone()[0]
 
-        # 4. Las instrucciones DML necesitan commit() para hacer los cambios persistentes
+        # 4. Confirmar la transacción
         conexion.commit()
 
-        # 5. Obtener el ID del registro recién insertado para verificarlo
-        if isinstance(conexion, sqlite3.Connection):
-            cursor.execute("SELECT last_insert_rowid();")
-            nuevo_id = cursor.fetchone()[0]
-        else:
-            cursor.execute("SELECT LASTVAL();")
-            nuevo_id = cursor.fetchone()[0]
-
-        # 6. Verificar que haya quedado creado realizando un SELECT
+        # 5. Verificar que haya quedado creado realizando un SELECT
         cursor.execute(
-            f"SELECT c.id, c.fecha, t.nombre, c.salario, c.dias, c.pago "
-            f"FROM casos_incapacidad c "
-            f"JOIN tipos_incapacidad t ON c.tipo_id = t.id "
-            f"WHERE c.id = {param_placeholder}",
+            """
+            SELECT c.id, c.fecha, t.nombre, c.salario, c.dias, c.pago
+            FROM casos_incapacidad c
+            JOIN tipos_incapacidad t ON c.tipo_id = t.id
+            WHERE c.id = %s;
+            """,
             (nuevo_id,),
         )
         resultado = cursor.fetchone()

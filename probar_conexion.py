@@ -1,9 +1,9 @@
 """
-Script de prueba de conexión a la base de datos.
+Script de prueba de conexión a la base de datos PostgreSQL.
 Referencia: hellodb.py (https://github.com/ProfeBill/database-01)
 
 Este script demuestra:
-1. Cómo conectarse a la base de datos (PostgreSQL o SQLite según secret_config.py).
+1. Cómo conectarse a la base de datos PostgreSQL según secret_config.py.
 2. Cómo crear un cursor para ejecutar sentencias SQL.
 3. Cómo ejecutar consultas (SELECT) y recuperar resultados con fetchall() o fetchone().
 4. Cómo cerrar los recursos de forma segura.
@@ -58,8 +58,7 @@ def main() -> None:
         print("\nConsejo:")
         print("  1. Verifique que el servicio de PostgreSQL este activo.")
         print("  2. Si usa Neon o Render, verifique las credenciales en 'secret_config.py'.")
-        print("  3. Si desea probar sin servidor, elimine o renombre 'secret_config.py'")
-        print("     para que el sistema use automaticamente SQLite local.")
+        print("  3. Asegúrese de que el host, puerto, usuario y base de datos sean accesibles.")
         sys.exit(1)
     except Exception as err:
         print(f"\n[ERROR] Ocurrio un error inesperado: {err}")
