@@ -87,10 +87,11 @@ Calculadora_Incapacidades/
 │
 ├── templates/                       # Plantillas HTML con motor Jinja2 (ref: webserver-01)
 │   ├── base.html                    # Plantilla base común
-│   ├── incapacidad.html             # Formulario de cálculo
+│   ├── incapacidad.html             # Formulario de cálculo y botón para uso por primera vez
 │   ├── resultado_incapacidad.html   # Resultados de liquidación
 │   ├── casos.html                   # Listado histórico tabulado
-│   └── buscar.html                  # Búsqueda de casos con tabla de resultados
+│   ├── buscar.html                  # Búsqueda de casos con tabla de resultados
+│   └── crear_tablas.html            # Inicialización de tablas y confirmación de catálogo
 │
 ├── static/                          # Archivos estáticos de la interfaz web
 │   └── css/
@@ -279,6 +280,7 @@ Una vez en ejecución, acceda en su navegador web a: **[http://127.0.0.1:5000/](
 - **`/incapacidad/calcular` (POST):** Procesa los datos enviados, ejecuta el cálculo en el modelo, valida errores (con código HTTP 400), opcionalmente guarda el caso en la base de datos y muestra la tarjeta de liquidación detallada.
 - **`/casos` (GET):** Consulta y presenta en una tabla con diseño moderno el historial completo de casos registrados en la base de datos (con sumatorias de días y pagos).
 - **`/buscar` (GET):** Permite filtrar y buscar registros por ID, fecha o tipo de incapacidad mediante el parámetro `query`.
+- **`/crear-tablas` (GET / POST):** Permite a un usuario que utiliza la aplicación por primera vez inicializar las tablas DDL (`tipos_incapacidad`, `casos_incapacidad`) y cargar el catálogo inicial de tipos en PostgreSQL con un solo clic.
 
 ### Interfaz gráfica (KivyMD)
 

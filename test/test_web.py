@@ -95,6 +95,29 @@ class TestWebViews(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Maternidad", response.data)
 
+    def test_get_formulario_contiene_seccion_primera_vez(self):
+        """GET / contiene la sección y enlace de 'Uso por primera vez'."""
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Uso por primera vez".encode("utf-8"), response.data)
+        self.assertIn("haga click aqui para crear las tablas".encode("utf-8"), response.data)
+        self.assertIn(b"/crear-tablas", response.data)
+
+    def test_crear_tablas_exitoso(self):
+        """GET /crear-tablas invoca crear_tablas en el controlador y muestra mensaje de éxito."""
+        response = self.client.get("/crear-tablas")
+        self.assertEqual(response.status_code, 200)
+        self.mock_controller.crear_tablas.assert_called_once()
+        self.assertIn("Tablas creadas exitosamente".encode("utf-8"), response.data)
+
+    def test_crear_tablas_error(self):
+        """GET /crear-tablas muestra alerta cuando la BD falla."""
+        from src.controller.incapacidad_controller import BaseDeDatosError
+        self.mock_controller.crear_tablas.side_effect = BaseDeDatosError("crear las tablas", "Fallo de conexión")
+        response = self.client.get("/crear-tablas")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("No se pudieron crear las tablas".encode("utf-8"), response.data)
+
 
 if __name__ == "__main__":
     unittest.main()

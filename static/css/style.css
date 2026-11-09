@@ -606,3 +606,33 @@ select {
     color: var(--text-muted);
     margin-top: auto;
 }
+
+/* Card Uso por primera vez */
+.card-first-time {
+    margin-top: 1.75rem;
+    padding: 1.5rem 2rem;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.first-time-container h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.35rem;
+}
+
+.first-time-container p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.link-highlight {
+    color: var(--accent-primary);
+    text-decoration: underline;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.link-highlight:hover {
+    color: var(--accent-hover);
+    text-shadow: 0 0 8px var(--accent-glow);
+}
+

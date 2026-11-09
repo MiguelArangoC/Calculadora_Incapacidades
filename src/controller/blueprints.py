@@ -50,6 +50,32 @@ def incapacidad_form():
     return render_template("incapacidad.html")
 
 
+@incapacidad_bp.route("/crear-tablas", methods=["GET", "POST"])
+@incapacidad_bp.route("/crear_tablas", methods=["GET", "POST"])
+def crear_tablas_web():
+    """
+    GET / POST /crear-tablas — Crea las tablas y catálogo inicial en PostgreSQL.
+    Permite inicializar la base de datos a usuarios que acceden por primera vez.
+    """
+    controlador = _obtener_controlador()
+    mensaje = None
+    error = None
+
+    try:
+        controlador.crear_tablas()
+        mensaje = "¡Tablas creadas exitosamente! El catálogo inicial y las tablas de la base de datos están listas."
+    except BaseDeDatosError as err:
+        error = f"No se pudieron crear las tablas: {err}"
+    except Exception as err:
+        error = f"Error al inicializar la base de datos: {err}"
+
+    return render_template(
+        "crear_tablas.html",
+        mensaje=mensaje,
+        error=error,
+    )
+
+
 @incapacidad_bp.route("/incapacidad/calcular", methods=["POST"])
 def incapacidad_calcular():
     """

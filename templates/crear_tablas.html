@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Tablas - Base de Datos{% endblock %}
+
+{% block content %}
+<div class="card card-wide">
+    <div class="card-header">
+        <h2>Inicialización de Base de Datos</h2>
+        <p class="subtitle">Creación de tablas DDL y carga del catálogo legal en PostgreSQL</p>
+    </div>
+
+    {% if mensaje %}
+    <div class="alert alert-success">
+        <span class="alert-icon">✅</span>
+        <div class="alert-content">
+            <strong>Operación Exitosa:</strong>
+            <p>{{ mensaje }}</p>
+        </div>
+    </div>
+    <div class="card-body">
+        <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">Se crearon y verificaron las siguientes estructuras:</p>
+        <ul style="margin: 0 0 1.5rem 1.5rem; color: var(--text-secondary);">
+            <li><strong>tipos_incapacidad:</strong> Catálogo legal de tipos con claves únicas (enfermedad_general, maternidad, riesgo_laboral).</li>
+            <li><strong>casos_incapacidad:</strong> Tabla transaccional con validaciones CHECK y clave foránea.</li>
+        </ul>
+        <div class="form-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="/" class="btn btn-primary">Ir a Calcular Incapacidad &rarr;</a>
+            <a href="/casos" class="btn btn-secondary">Ver Historial de Casos</a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-error">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-content">
+            <strong>No se pudieron crear las tablas:</strong>
+            <p>{{ error }}</p>
+        </div>
+    </div>
+    <div class="card-body">
+        <p style="color: var(--text-secondary);">Verifique que el servicio PostgreSQL esté activo y que las credenciales configuradas en Render o en <code>secret_config.py</code> sean correctas.</p>
+        <div class="form-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="/crear-tablas" class="btn btn-primary">Reintentar Creación</a>
+            <a href="/" class="btn btn-secondary">Volver al Inicio</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
