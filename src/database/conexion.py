@@ -1,8 +1,10 @@
 """
 Conexión con la base de datos PostgreSQL mediante Psycopg2.
 
-Lee la configuración desde ``secret_config.py`` o desde la variable
-de entorno ``DATABASE_URL``.
+Lee la configuración en el siguiente orden de prioridad:
+1. Módulo ``secret_config.py`` (entorno local).
+2. Variable de entorno ``DATABASE_URL`` (estándar de Render, Neon, Heroku).
+3. Variables de entorno individuales (``DB_HOST``, ``DB_USER``, etc.).
 
 Ofrece:
 - ``obtener_conexion()``: Retorna una conexión directa (psycopg2) para
@@ -56,8 +58,19 @@ def descripcion_conexion(configuracion: ModuleType | None = None) -> str:
     if configuracion is None:
         url_env = os.environ.get("DATABASE_URL")
         if url_env:
-            return url_env.split("@")[-1] if "@" in url_env else "PostgreSQL (DATABASE_URL)"
-        return "PostgreSQL (sin configuración activa: secret_config.py no encontrado)"
+            if "@" in url_env:
+                host_info = url_env.split("@")[-1]
+                return f"postgresql://***@{host_info}"
+            return "postgresql://*** (DATABASE_URL)"
+
+        nombre_bd = os.environ.get("DB_NAME") or os.environ.get("PGDATABASE")
+        if nombre_bd:
+            host = os.environ.get("DB_HOST") or os.environ.get("PGHOST") or "localhost"
+            puerto = os.environ.get("DB_PORT") or os.environ.get("PGPORT") or 5432
+            usuario = os.environ.get("DB_USER") or os.environ.get("PGUSER") or "postgres"
+            return f"postgresql://{usuario}:***@{host}:{puerto}/{nombre_bd}"
+
+        return "PostgreSQL (sin configuración: configure DATABASE_URL o secret_config.py)"
 
     usuario = getattr(configuracion, "DB_USER", "postgres") or "postgres"
     host = getattr(configuracion, "DB_HOST", "localhost") or "localhost"
@@ -71,16 +84,10 @@ def obtener_conexion(configuracion: ModuleType | None = None) -> Any:
     """
     Retorna una conexión directa DB-API (psycopg2) a la base de datos PostgreSQL.
 
-    Args:
-        configuracion: Módulo con credenciales. Si es None, carga secret_config.py
-            o la variable de entorno DATABASE_URL.
-
-    Returns:
-        Conexión directa de psycopg2.
-
-    Raises:
-        ErrorConexionBD: Si no se puede establecer la conexión o falta psycopg2.
-        ConfiguracionBDInvalida: Si falta algún campo obligatorio.
+    Prioridad de lectura:
+    1. Archivo local `secret_config.py`
+    2. Variable de entorno `DATABASE_URL` (Render / Cloud)
+    3. Variables de entorno individuales (`DB_NAME`, `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_PORT`)
     """
     if psycopg2 is None:
         raise ErrorConexionBD(
@@ -91,19 +98,45 @@ def obtener_conexion(configuracion: ModuleType | None = None) -> Any:
     if configuracion is None:
         configuracion = _cargar_configuracion()
 
+    # 1. Si no existe secret_config.py, consultar variables de entorno
     if configuracion is None:
+        # A. Variable DATABASE_URL
         url_env = os.environ.get("DATABASE_URL")
         if url_env:
+            if url_env.startswith("postgres://"):
+                url_env = "postgresql://" + url_env[len("postgres://"):]
             try:
-                return psycopg2.connect(url_env, connect_timeout=5)
+                return psycopg2.connect(url_env, connect_timeout=10)
             except Exception as error:
                 raise ErrorConexionBD(
                     f"No se pudo conectar al servidor PostgreSQL mediante DATABASE_URL. Detalle: {error}"
                 ) from error
 
+        # B. Variables individuales
+        nombre_bd = os.environ.get("DB_NAME") or os.environ.get("PGDATABASE")
+        if nombre_bd:
+            host = os.environ.get("DB_HOST") or os.environ.get("PGHOST") or "localhost"
+            puerto = os.environ.get("DB_PORT") or os.environ.get("PGPORT") or 5432
+            usuario = os.environ.get("DB_USER") or os.environ.get("PGUSER")
+            clave = os.environ.get("DB_PASSWORD") or os.environ.get("PGPASSWORD")
+            try:
+                return psycopg2.connect(
+                    database=nombre_bd,
+                    user=usuario,
+                    password=clave,
+                    host=host,
+                    port=puerto,
+                    connect_timeout=10,
+                )
+            except Exception as error:
+                raise ErrorConexionBD(
+                    f"No se pudo conectar al servidor PostgreSQL con variables de entorno. Detalle: {error}"
+                ) from error
+
         raise ErrorConexionBD(
             "No se encontró 'secret_config.py' ni la variable de entorno 'DATABASE_URL'. "
-            "Configure las credenciales de PostgreSQL en 'secret_config.py' a partir de 'secret_config_sample.py'."
+            "En Render, configure la variable de entorno 'DATABASE_URL' en el Dashboard de su Web Service, "
+            "o agregue 'secret_config.py' como un Secret File."
         )
 
     faltantes = [
@@ -129,7 +162,7 @@ def obtener_conexion(configuracion: ModuleType | None = None) -> Any:
             password=clave,
             host=host,
             port=puerto,
-            connect_timeout=5,
+            connect_timeout=10,
         )
     except UnicodeDecodeError:
         raise ErrorConexionBD(
@@ -149,10 +182,6 @@ def ejecutar_script_sql(
 ) -> None:
     """
     Lee y ejecuta un archivo .sql en la base de datos PostgreSQL.
-
-    Args:
-        ruta_archivo: Ruta al archivo .sql.
-        conexion: Conexión psycopg2 opcional. Si es None, abre una nueva conexión.
     """
     ruta = Path(ruta_archivo)
     if not ruta.is_absolute():
